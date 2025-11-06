@@ -40,16 +40,19 @@ const perfectPathCtx = perfectPathCanvas.getContext("2d")
 ctx.lineWidth = 1;
 ctx.strokeStyle = "black";
 
+// v-shaped line
+let horizontalLength = 165.93;
+let lineLength = 466.5/2;
 let innerSize = 110;
 let outerSize = innerSize * 1.7;
 
 const borderX = canvas.width / 2;
 const borderY = canvas.height / 2;
 
-const startSize = (outerSize - innerSize) / 6;
+const startSize = 12.83;
 const targetHeight = 200;
 const targetWidth = 20
-const leftCircleX = canvas.width / 2 - innerSize - (outerSize - innerSize) / 2;
+const leftCircleX = canvas.width / 2 - horizontalLength;
 
 let data = [];
 let accuracy = 0;
@@ -764,11 +767,11 @@ async function testingGame() {
       testingPageHeading.textContent = `Testing Round ${round}`;
 
       if (round == 1) {
-        testingPageDesc.innerHTML = `16 movements, goal time: ${testTimeIntervals[t].min} - ${testTimeIntervals[t].max}ms<br><b class="reminder">Prioritize moving at the right speed!</b><br><b class="handReminder">Draw with your non-dominant (right) hand</b>`;
+        testingPageDesc.innerHTML = `16 movements, goal time: ${testTimeIntervals[t].min} - ${testTimeIntervals[t].max}ms<br><b class="reminder">Prioritize moving at the right speed!</b><br><b class="handReminder">Draw with your dominant (right) hand</b>`;
       } else if (blockMovements == 0) {
-        testingPageDesc.innerHTML = `Your average accuracy in the previous block was 0%<br>Next block: 16 movements, goal time of ${testTimeIntervals[t].min} - ${testTimeIntervals[t].max} ms<br><b class="reminder">Prioritize moving at the right speed!</b><br><b class="handReminder">Draw with your non-dominant (right) hand</b>`;
+        testingPageDesc.innerHTML = `Your average accuracy in the previous block was 0%<br>Next block: 16 movements, goal time of ${testTimeIntervals[t].min} - ${testTimeIntervals[t].max} ms<br><b class="reminder">Prioritize moving at the right speed!</b><br><b class="handReminder">Draw with your dominant (right) hand</b>`;
       } else {
-        testingPageDesc.innerHTML = `Your average accuracy in the previous block was ${Math.round(blockAccuracy/(blockMovements))}%<br>Next block: 16 movements, goal time of ${testTimeIntervals[t].min} - ${testTimeIntervals[t].max} ms<br><b class="reminder">Prioritize moving at the right speed!</b><br><b class="handReminder">Draw with your non-dominant (right) hand</b>`;
+        testingPageDesc.innerHTML = `Your average accuracy in the previous block was ${Math.round(blockAccuracy/(blockMovements))}%<br>Next block: 16 movements, goal time of ${testTimeIntervals[t].min} - ${testTimeIntervals[t].max} ms<br><b class="reminder">Prioritize moving at the right speed!</b><br><b class="handReminder">Draw with your dominant (right) hand</b>`;
       }
 
       gameRound.style.display = "none";
@@ -912,7 +915,9 @@ function displayBoundary() {
 
   ctx.save();
   ctx.translate(rotatedRightX, rotatedRightY);
-  ctx.rotate(angle*Math.PI/180+Math.PI/2);
+  // straight-line
+  ctx.rotate(angle*Math.PI/180);
+  // ctx.rotate(angle*Math.PI/180+Math.PI/2);
   for (let i = 0; i < numRings; i++) {
     ctx.fillStyle = colors[i];
     ctx.fillRect(-targetWidth / 2, -targetHeight / 2 + ringHeight * i, targetWidth, ringHeight);
@@ -924,13 +929,34 @@ function displayBoundary() {
   ctx.strokeStyle = "black";
   ctx.lineWidth = 3;    
   ctx.beginPath();
-  ctx.arc(borderX, borderY, (innerSize + outerSize)/2, radAngle + Math.PI*2, radAngle + Math.PI);
+
+  //straight-line
+  if (angle == 0) {
+    ctx.moveTo(borderX-horizontalLength, borderY)
+    ctx.lineTo(borderX, borderY-horizontalLength)
+    ctx.lineTo(borderX+horizontalLength, borderY)
+  } else if (angle == 90) {
+    ctx.moveTo(borderX, borderY-horizontalLength)
+    ctx.lineTo(borderX+horizontalLength, borderY)
+    ctx.lineTo(borderX, borderY+horizontalLength)
+  } else if (angle == 180) {
+    ctx.moveTo(borderX+horizontalLength, borderY)
+    ctx.lineTo(borderX, borderY+horizontalLength)
+    ctx.lineTo(borderX-horizontalLength, borderY)
+  } else {
+    ctx.moveTo(borderX, borderY+horizontalLength)
+    ctx.lineTo(borderX-horizontalLength, borderY)
+    ctx.lineTo(borderX, borderY-horizontalLength)
+  }
+
+  //ctx.arc(borderX, borderY, (innerSize + outerSize)/2, radAngle + Math.PI*2, radAngle + Math.PI);
   ctx.stroke();
 
   ctx.setLineDash([]);
-  lineToAngle(ctx, rotatedRightX, rotatedRightY, 12, angle - 45);
-  lineToAngle(ctx, rotatedRightX, rotatedRightY, 12, angle + 45);
-  console.log("Angle: ", angle)
+  // arrow dashes
+  lineToAngle(ctx, rotatedRightX, rotatedRightY, 12, angle - 45 + 90 + 45);
+  lineToAngle(ctx, rotatedRightX, rotatedRightY, 12, angle + 45 + 90 + 45);
+
   ctx.setLineDash([]);
   ctx.lineWidth = 1;
   ctx.strokeStyle = "black";
@@ -1014,46 +1040,71 @@ function beginRound(intervalTime) {
 
 function isMouseOnTarget(mouseX, mouseY) {
   function lineIntersect(a, b, c, d, p, q, r, s) {
-    var det, gamma, lambda;
-    det = (c - a) * (s - q) - (r - p) * (d - b);
-    if (det === 0) {
-      return false;
-    } else {
-      lambda = ((s - q) * (r - a) + (p - r) * (s - b)) / det;
-      gamma = ((b - d) * (r - a) + (c - a) * (s - b)) / det;
-      return (0 < lambda && lambda < 1) && (0 < gamma && gamma < 1);
-    }
-  };
-    
-  let [targetStartX, targetStartY, targetEndX, targetEndY] = [0, 0, 0, 0]
-  let [targetStartX_Opposite, targetStartY_Opposite, targetEndX_Opposite, targetEndY_Opposite] = [0, 0, 0, 0]
-
-  if (angle == 0 || angle == 180) {
-    targetStartX = rotatedRightX - targetHeight/2
-    targetStartY = rotatedRightY - targetWidth/2
-    targetEndX = rotatedRightX + targetHeight/2
-    targetEndY = rotatedRightY + targetWidth/2
-    targetStartX_Opposite = rotatedRightX + targetHeight/2
-    targetStartY_Opposite = rotatedRightY + targetWidth/2
-    targetEndX_Opposite = rotatedRightX - targetHeight/2
-    targetEndY_Opposite = rotatedRightY - targetWidth/2
-  } else if (angle == 90 || angle == 270) {
-    targetStartX = rotatedRightX - targetWidth/2
-    targetStartY = rotatedRightY - targetHeight/2
-    targetEndX = rotatedRightX + targetWidth/2
-    targetEndY = rotatedRightY + targetHeight/2
-    targetStartX_Opposite = rotatedRightX + targetWidth/2
-    targetStartY_Opposite = rotatedRightY + targetHeight/2
-    targetEndX_Opposite = rotatedRightX - targetWidth/2
-    targetEndY_Opposite = rotatedRightY - targetHeight/2
+    var det = (c - a) * (s - q) - (r - p) * (d - b);
+    if (det === 0) return false;
+    var lambda = ((s - q) * (r - a) + (p - r) * (s - b)) / det;
+    var gamma = ((b - d) * (r - a) + (c - a) * (s - b)) / det;
+    return (0 < lambda && lambda < 1) && (0 < gamma && gamma < 1);
   }
 
-  return (mouseX >= targetStartX &&
-          mouseX <= targetEndX &&
-          mouseY >= targetStartY &&
-          mouseY <= targetEndY
-          ) || lineIntersect(prevMouseX, prevMouseY, mouseX, mouseY, targetStartX, targetStartY, targetEndX, targetEndY)
-            || lineIntersect(prevMouseX, prevMouseY, mouseX, mouseY, targetStartX_Opposite, targetStartY_Opposite, targetEndX_Opposite, targetEndY_Opposite)
+  // Convert degrees to radians
+  const angleRad = (angle * Math.PI) / 180;
+
+  const cos = Math.cos(angleRad);
+  const sin = Math.sin(angleRad);
+
+  const halfWidth = targetWidth / 2;
+  const halfHeight = targetHeight / 2;
+
+  // Compute corners of the rotated rectangle
+  const corners = [
+    [
+      rotatedRightX + (-halfWidth) * cos - (-halfHeight) * sin,
+      rotatedRightY + (-halfWidth) * sin + (-halfHeight) * cos
+    ],
+    [
+      rotatedRightX + (halfWidth) * cos - (-halfHeight) * sin,
+      rotatedRightY + (halfWidth) * sin + (-halfHeight) * cos
+    ],
+    [
+      rotatedRightX + (halfWidth) * cos - (halfHeight) * sin,
+      rotatedRightY + (halfWidth) * sin + (halfHeight) * cos
+    ],
+    [
+      rotatedRightX + (-halfWidth) * cos - (halfHeight) * sin,
+      rotatedRightY + (-halfWidth) * sin + (halfHeight) * cos
+    ]
+  ];
+
+  // Check if mouse is inside rectangle
+  function pointInRotatedRect(px, py) {
+    function area(x1, y1, x2, y2, x3, y3) {
+      return Math.abs((x1*(y2-y3) + x2*(y3-y1) + x3*(y1-y2)) / 2);
+    }
+
+    const [A, B, C, D] = corners;
+    const totalArea = area(...A, ...B, ...C) + area(...A, ...C, ...D);
+    const mouseArea =
+      area(px, py, ...A, ...B) +
+      area(px, py, ...B, ...C) +
+      area(px, py, ...C, ...D) +
+      area(px, py, ...D, ...A);
+
+    return Math.abs(mouseArea - totalArea) < 0.5;
+  }
+
+  // Check if mouse crossed any edge
+  function crossedAnyEdge() {
+    const [A, B, C, D] = corners;
+    return (
+      lineIntersect(prevMouseX, prevMouseY, mouseX, mouseY, A[0], A[1], B[0], B[1]) ||
+      lineIntersect(prevMouseX, prevMouseY, mouseX, mouseY, B[0], B[1], C[0], C[1]) ||
+      lineIntersect(prevMouseX, prevMouseY, mouseX, mouseY, C[0], C[1], D[0], D[1]) ||
+      lineIntersect(prevMouseX, prevMouseY, mouseX, mouseY, D[0], D[1], A[0], A[1])
+    );
+  }
+
+  return pointInRotatedRect(mouseX, mouseY) || crossedAnyEdge();
 }
 
 function beginDraw(minTime, maxTime) {
@@ -1067,53 +1118,143 @@ function beginDraw(minTime, maxTime) {
     let soundPlayed = false
     let roundOver = false
     let finalAnimation = false;
-    let lastX = 0
-    let lastY = 0
+    let startX = 0
+    let startY = 0
+    let middleX = 0
+    let middleY = 0
+    let endX = 0
+    let endY = 0
+    let perfectX = 0
+    let perfectY = 0
 
     async function gameRound() {
       elapsedTime = new Date().getTime() - startTime;
-      gameTimer.style.display = "flex";
+      let progress = elapsedTime / meanTime;
 
+      gameTimer.style.display = "flex";
       if (elapsedTime > maxTime || elapsedTime < minTime) {
         gameTimer.innerHTML = `Your Movement Time: <span style="color: red"> &nbsp${elapsedTime} ms</span>`;
       } else {
         gameTimer.innerHTML = `Your Movement Time: <span style="color:${timerColor}"> &nbsp${elapsedTime} ms</span>`;
       }
 
-      // draw perfect path
-      let progress = elapsedTime / meanTime;
-      let currentAngle = radAngle + Math.PI - progress * Math.PI;
-      const perfectX = borderX + ((innerSize + outerSize) / 2) * Math.cos(currentAngle);
-      const perfectY = borderY + ((innerSize + outerSize) / 2) * Math.sin(currentAngle);
+      if (angle == 0) {
+        // left to right
+        startX = borderX - horizontalLength;
+        startY = borderY;
+        middleX = borderX
+        middleY = borderY - horizontalLength;
+        endX = borderX + horizontalLength;
+        endY = borderY;
+
+        // progress
+        if (progress < 0.5) {
+          perfectX = startX + progress * (horizontalLength*2);
+          perfectY = startY - progress * (horizontalLength*2);
+        } else {
+          perfectX = middleX + (progress-0.5) * (horizontalLength*2);
+          perfectY = middleY + (progress-0.5) * (horizontalLength*2);
+        }
+
+      } else if (angle == 90) {
+        // top to bottom
+        startX = borderX;
+        startY = borderY - horizontalLength;
+        middleX = borderX + horizontalLength;
+        middleY = borderY;
+        endX = borderX;
+        endY = borderY + horizontalLength;
+
+        // progress
+        if (progress < 0.5) {
+          perfectX = startX + progress * (horizontalLength*2);
+          perfectY = startY + progress * (horizontalLength*2);
+        } else {
+          perfectX = middleX - (progress-0.5) * (horizontalLength*2);
+          perfectY = middleY + (progress-0.5) * (horizontalLength*2);
+        }
+
+      } else if (angle == 180) {
+        // right to left
+        startX = borderX + horizontalLength;
+        startY = borderY;
+        middleX = borderX
+        middleY = borderY + horizontalLength;
+        endX = borderX - horizontalLength;
+        endY = borderY;
+        
+        // progress
+        if (progress < 0.5) {
+          perfectX = startX - progress * (horizontalLength*2);
+          perfectY = startY + progress * (horizontalLength*2);
+        } else {
+          perfectX = middleX - (progress-0.5) * (horizontalLength*2);
+          perfectY = middleY - (progress-0.5) * (horizontalLength*2);
+        }
+
+      } else if (angle == 270) {
+        // bottom to top
+        startX = borderX;
+        startY = borderY + horizontalLength;
+        middleX = borderX - horizontalLength
+        middleY = borderY;
+        endX = borderX;
+        endY = borderY - horizontalLength;
+                
+        // progress
+        if (progress < 0.5) {
+          perfectX = startX - progress * (horizontalLength*2);
+          perfectY = startY - progress * (horizontalLength*2);
+        } else {
+          perfectX = middleX + (progress-0.5) * (horizontalLength*2);
+          perfectY = middleY - (progress-0.5) * (horizontalLength*2);
+        }
+      }
       
       if(progress <= 1) {
         perfectPathCtx.lineWidth = 2;
         perfectPathCtx.clearRect(0, 0, canvas.width, canvas.height);
+    
+        // Draw the moving dot at (perfectX, perfectY)
         perfectPathCtx.beginPath();
         perfectPathCtx.arc(perfectX, perfectY, 5, 0, 2 * Math.PI);
         perfectPathCtx.fillStyle = "lightgreen";
         perfectPathCtx.fill();
         perfectPathCtx.strokeStyle = "black";
         perfectPathCtx.stroke();
-
+        
+        // Draw V shape
         perfectPathCtx.strokeStyle = "lightgreen";
-        perfectPathCtx.lineWidth = 5;    
+        perfectPathCtx.lineWidth = 5;
         perfectPathCtx.beginPath();
-        perfectPathCtx.arc(borderX, borderY, (innerSize + outerSize)/2, radAngle + Math.PI, Math.min(radAngle + Math.PI, currentAngle - 2.2*Math.PI/180), true);
+        
+        // Draw the line
+        if (progress < 0.5) {
+          perfectPathCtx.moveTo(startX, startY);
+          perfectPathCtx.lineTo(perfectX, perfectY)
+        } else {
+          perfectPathCtx.moveTo(startX, startY);
+          perfectPathCtx.lineTo(middleX, middleY);
+          perfectPathCtx.moveTo(middleX, middleY);
+          perfectPathCtx.lineTo(perfectX, perfectY)
+        }
         perfectPathCtx.stroke();
-        lastX = perfectX
-        lastY = perfectY
+
       } else if (finalAnimation == false) {
         perfectPathCtx.lineWidth = 5;
-        lineToAngle(perfectPathCtx, rotatedRightX, rotatedRightY, 12, angle - 45);
-        lineToAngle(perfectPathCtx, rotatedRightX, rotatedRightY, 12, angle + 45);
+        //lineToAngle(perfectPathCtx, rotatedRightX, rotatedRightY, 12, angle - 45 + 90);
+        //lineToAngle(perfectPathCtx, rotatedRightX, rotatedRightY, 12, angle + 45 + 90);
+        lineToAngle(perfectPathCtx, rotatedRightX, rotatedRightY, 12, angle + 90);
+        lineToAngle(perfectPathCtx, rotatedRightX, rotatedRightY, 12, angle + 180);
 
         perfectPathCtx.lineWidth = 2;
         perfectPathCtx.beginPath();
-        perfectPathCtx.arc(lastX, lastY, 5, 0, 2 * Math.PI);
-        perfectPathCtx.fillStyle = "lightgreen";
-        perfectPathCtx.fill();
-        perfectPathCtx.strokeStyle = "black";
+        perfectPathCtx.moveTo(startX, startY);
+        perfectPathCtx.lineTo(middleX, middleY);
+        perfectPathCtx.moveTo(middleX, middleY);
+        perfectPathCtx.lineTo(endX, endY);
+        perfectPathCtx.strokeStyle = "lightgreen";
+        perfectPathCtx.lineWidth = 5;
         perfectPathCtx.stroke();
         finalAnimation = true
       }
@@ -1142,7 +1283,7 @@ function beginDraw(minTime, maxTime) {
           
           ctx.save();
           ctx.translate(rotatedRightX, rotatedRightY);
-          ctx.rotate(angle*Math.PI/180+Math.PI/2);
+          ctx.rotate(angle*Math.PI/180);
           ctx.strokeStyle = "rgb(0, 255, 0)";
           ctx.strokeRect(-targetWidth / 2, -targetHeight / 2, targetWidth, targetHeight);
           ctx.restore();
@@ -1167,6 +1308,7 @@ function beginDraw(minTime, maxTime) {
     gameRound();
   });
 }
+
 
 // ACCURACY
 function calculateAccuracy(data) {
@@ -1328,30 +1470,73 @@ function writeData(gameData, header) {
 }
 
 // HELPER
-function dotAccuracy(x, y) {
-  const dx = x - borderX;
-  const dy = y - borderY;
-  const distToCenter = Math.sqrt(dx**2 + dy**2);
-  const radius = (innerSize + outerSize)/2
+function lineToPoint(x1, y1, x2, y2, px, py) {
+      // Compute line segment vector
+      let dx = x2 - x1;
+      let dy = y2 - y1;
   
-  let dotAngle = Math.atan2(dy, dx) + Math.PI;
-  let radAngleStart =  angle * (Math.PI / 180);
-  let radAngleEnd = radAngle + Math.PI;
-  if (radAngleEnd > 2*Math.PI && dotAngle >= 0 && dotAngle <= 1/2*Math.PI) {
-    dotAngle += 2*Math.PI
-  }
+      // Compute parameter t that minimizes the distance
+      let t = ((px - x1) * dx + (py - y1) * dy) / (dx * dx + dy * dy);
   
-  // we consider a 1px difference as an error of 3%
-  if (!(dotAngle >= radAngleStart && dotAngle <= radAngleEnd)) {
-      console.log("True")
-      return Math.max(100 - Math.abs(radius - distToCenter)*3, 0);
-  } else {
-      console.log("False")
-      let distanceToStart = Math.sqrt( (x - rotatedLeftX)**2 + (y - rotatedLeftY)**2 )
-      let distanceToEnd = Math.sqrt( (x - rotatedRightX)**2 + (y - rotatedRightY)**2 );
-      return Math.max(100 - distanceToStart, 100 - distanceToEnd, 0);
-  }
+      // Clamp t to the range [0, 1] to keep the projection within the segment
+      t = Math.max(0, Math.min(1, t));
+  
+      // Compute closest point on the segment
+      let closestX = x1 + t * dx;
+      let closestY = y1 + t * dy;
+  
+      // Compute distance from the point to the closest point
+      let distX = px - closestX;
+      let distY = py - closestY;
+
+      return Math.sqrt(distX * distX + distY * distY)
 }
+
+function dotAccuracy(px, py) {
+      let startX, startY, middleX, middleY, endX, endY;
+
+      if (angle == 0) {
+        // left to right
+        startX = borderX - horizontalLength;
+        startY = borderY;
+        middleX = borderX
+        middleY = borderY - horizontalLength;
+        endX = borderX + horizontalLength;
+        endY = borderY;
+
+      } else if (angle == 90) {
+        // top to bottom
+        startX = borderX;
+        startY = borderY - horizontalLength;
+        middleX = borderX + horizontalLength;
+        middleY = borderY;
+        endX = borderX;
+        endY = borderY + horizontalLength;
+
+      } else if (angle == 180) {
+        // right to left
+        startX = borderX + horizontalLength;
+        startY = borderY;
+        middleX = borderX
+        middleY = borderY + horizontalLength;
+        endX = borderX - horizontalLength;
+        endY = borderY;
+
+      } else if (angle == 270) {
+        // bottom to top
+        startX = borderX;
+        startY = borderY + horizontalLength;
+        middleX = borderX - horizontalLength
+        middleY = borderY;
+        endX = borderX;
+        endY = borderY - horizontalLength;
+      }
+  
+      let acc1 = 100 - lineToPoint(startX, startY, middleX, middleY, px, py)
+      let acc2 = 100 - lineToPoint(middleX, middleY, endX, endY, px, py)
+      
+      return Math.max(acc1, acc2)
+  }
 
 const colorScale = chroma.scale(['#58e32c', '#b8dd28', '#ffe233', '#ffa535', '#ff4545']).domain([100, 0]);
 function drawPath(data) {
@@ -1392,106 +1577,3 @@ function shuffleArray(array) {
 function wait(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
-
-/*
-function flashShape(ctx, canvas, shapeType) {
-    let minFlashTime = 5000;
-    let maxFlashTime = 5000;
-    let flashDuration = getRandomNum(minFlashTime, maxFlashTime);
-
-    let minShapeSize = 100
-    let maxShapeSize = 100
-    let shapeSize = getRandomNum(minShapeSize, maxShapeSize)
-    let shapeX = canvas.width/2
-    let shapeY = canvas.height/2
-
-    ctx.lineWidth = 2;
-    ctx.strokeStyle = 'white';
-    ctx.beginPath();
-
-    return new Promise(async resolve => {
-        if (shapeType == 'circle') { 
-            ctx.arc(shapeX, shapeY, shapeSize, 0, 2*Math.PI); 
-        } 
-        else if (shapeType == 'rectangle') { 
-            ctx.rect(shapeX - shapeSize / 2, shapeY - shapeSize / 2, shapeSize, shapeSize); 
-        } 
-        else if (shapeType == 'triangle') {
-            ctx.moveTo(shapeX, shapeY - shapeSize / 2);
-            ctx.lineTo(shapeX - shapeSize / 2, shapeY + shapeSize / 2);
-            ctx.lineTo(shapeX + shapeSize / 2, shapeY + shapeSize / 2);
-            ctx.closePath();
-        }
-        else if (shapeType == 'diamond') {
-            ctx.moveTo(shapeX, shapeY - shapeSize / 2);
-            ctx.lineTo(shapeX + shapeSize / 2, shapeY);
-            ctx.lineTo(shapeX, shapeY + shapeSize / 2);
-            ctx.lineTo(shapeX - shapeSize / 2, shapeY);
-            ctx.closePath();
-        }
-        else if (shapeType == 'pentagon' || shapeType == 'hexagon' || shapeType == 'heptagon' || shapeType == 'octagon' || shapeType == 'decagon') {
-            let numberOfSides = 0;
-            if (shapeType == 'pentagon') {
-                numberOfSides = 5;
-            } 
-            else if (shapeType == 'hexagon') {
-                numberOfSides = 6;
-            } 
-            else if (shapeType == 'heptagon') {
-                numberOfSides = 7;
-            } 
-            else if (shapeType == 'octagon') {
-                numberOfSides = 8;
-            } 
-            else if (shapeType == 'decagon') {
-                numberOfSides = 10;
-            }
-
-            let rotation = 0
-            if (numberOfSides == 5) {
-                rotation = -Math.PI/(2*numberOfSides)
-            }
-            else if (numberOfSides == 7) {
-                rotation = Math.PI/(2*numberOfSides)
-            }
-            else if (numberOfSides%4 == 0) {
-                rotation = Math.PI/(numberOfSides)
-            }
-            ctx.moveTo (shapeX + shapeSize * Math.cos(rotation), shapeY + shapeSize *  Math.sin(rotation));          
-            for (var i = 1; i <= numberOfSides;i += 1) {
-              ctx.lineTo (shapeX + shapeSize * Math.cos(i * 2 * Math.PI / numberOfSides + rotation), shapeY + shapeSize * Math.sin(i * 2 * Math.PI / numberOfSides + rotation));
-            }
-        } 
-        else if(shapeType == 'star') {
-            var spikes = 5;
-            var rotation = Math.PI/2*3;
-            var 
-            shapeX;
-            var y = shapeY;
-            var step = Math.PI/spikes;
-
-            ctx.moveTo(shapeX, shapeY - shapeSize)
-            for(i = 0; i < spikes; i++) {
-              x = shapeX + Math.cos(rotation)*shapeSize;
-              y = shapeY + Math.sin(rotation)*shapeSize;
-              ctx.lineTo(x, y)
-              rotation += step
-      
-              x = shapeX + Math.cos(rotation)*shapeSize/2;
-              y = shapeY + Math.sin(rotation)*shapeSize/2;
-              ctx.lineTo(x, y)
-              rotation += step
-            }
-            ctx.lineTo(shapeX, shapeY - shapeSize);
-            ctx.closePath();
-        }
-
-        ctx.stroke();
-        await new Promise(resolve => setTimeout(resolve, flashDuration));
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        let shapeData = {x: shapeX, y: shapeY, size: shapeSize, shape: shapeType}
-        resolve(shapeData)
-    });
-}
-*/
