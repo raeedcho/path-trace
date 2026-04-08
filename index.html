@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>path-trace</title>
+  </head>
+  <body>
+    <div id="canvas-wrapper">
+      <canvas id="mainCanvas"></canvas>
+      <canvas id="pathCanvas"></canvas>
+      <canvas id="mouseCanvas"></canvas>
+    </div>
+
+    <div id="instructions-overlay" class="overlay"></div>
+    <div id="feedback-overlay" class="overlay"></div>
+    <div id="completion-overlay" class="overlay"></div>
+    <div id="break-overlay" class="overlay"></div>
+    <div id="pause-overlay" class="overlay"></div>
+
+    <div id="hud">
+      <div id="timer"></div>
+      <div id="round"></div>
+      <div id="goalTime"></div>
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
