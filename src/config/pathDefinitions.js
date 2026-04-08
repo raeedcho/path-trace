@@ -4,6 +4,8 @@ import '../paths/ArcPath.js';
 import '../paths/VShapePath.js';
 import '../paths/LinePath.js';
 
+// centerX/centerY (and startX/startY for lines) are injected at runtime
+// by the engine based on canvas size, not stored in definitions.
 export const pathDefinitions = {
   arc_default: {
     type: 'arc',
