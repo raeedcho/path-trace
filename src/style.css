@@ -1,3 +1,18 @@
+/* Reset */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: system-ui, -apple-system, sans-serif;
+  background-color: rgb(211, 211, 211);
+  overflow: hidden;
+}
+
 /* Canvas stacking */
 #canvas-wrapper {
   position: relative;
@@ -29,6 +44,25 @@
   z-index: 2;
 }
 
+/* HUD */
+#hud {
+  position: fixed;
+  top: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 1rem;
+  z-index: 5;
+}
+
+#hud > div {
+  background-color: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 5px;
+  font-size: 1rem;
+}
+
 /* Overlay centering */
 .overlay {
   position: fixed;
@@ -52,19 +86,4 @@
 .overlay p {
   font-size: 1.25rem;
   line-height: 1.6;
-}
-
-/* Reset */
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-body {
-  font-family: system-ui, -apple-system, sans-serif;
-  background-color: rgb(211, 211, 211);
-  overflow: hidden;
 }

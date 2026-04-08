@@ -47,6 +47,10 @@ describe('lineToPoint', () => {
   it('returns 5 for a point beyond segment start, snaps to endpoint', () => {
     expect(lineToPoint(0, 0, 10, 0, -5, 0)).toBe(5);
   });
+
+  it('returns distance to the point when segment has zero length', () => {
+    expect(lineToPoint(5, 5, 5, 5, 8, 9)).toBe(5); // distance from (5,5) to (8,9)
+  });
 });
 
 describe('normalizeAngle', () => {

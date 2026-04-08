@@ -47,9 +47,12 @@ export function lerp(a, b, t) {
 export function lineToPoint(x1, y1, x2, y2, px, py) {
   const dx = x2 - x1;
   const dy = y2 - y1;
+  const lenSq = dx * dx + dy * dy;
+
+  if (lenSq === 0) return distance(x1, y1, px, py);
 
   // Parameter t that minimizes the distance
-  let t = ((px - x1) * dx + (py - y1) * dy) / (dx * dx + dy * dy);
+  let t = ((px - x1) * dx + (py - y1) * dy) / lenSq;
 
   // Clamp t to [0, 1] to keep projection within the segment
   t = Math.max(0, Math.min(1, t));

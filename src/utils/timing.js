@@ -13,16 +13,20 @@ export function wait(ms) {
  */
 export function createTimer() {
   let startTime = 0;
+  let started = false;
 
   return {
     start() {
       startTime = performance.now();
+      started = true;
     },
     elapsed() {
+      if (!started) return 0;
       return performance.now() - startTime;
     },
     reset() {
       startTime = performance.now();
+      started = true;
     },
   };
 }
