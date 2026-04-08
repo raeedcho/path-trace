@@ -6,7 +6,10 @@ export class LocalDataManager {
   }
 
   async initialize(config) {
-    const sessionId = `local_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    const randomBytes = new Uint8Array(4);
+    crypto.getRandomValues(randomBytes);
+    const randomSuffix = Array.from(randomBytes, b => b.toString(36).padStart(2, '0')).join('').slice(0, 8);
+    const sessionId = `local_${Date.now()}_${randomSuffix}`;
     this.data = {
       sessionId,
       participantInfo: null,
