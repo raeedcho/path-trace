@@ -142,9 +142,6 @@ export function createCursorManager(options = {}) {
       locked = true;
       mouseMoveHandler = _onMouseMove;
       document.addEventListener('mousemove', mouseMoveHandler);
-      if (onLockLost) {
-        // Hide lock overlay when locked
-      }
     } else {
       locked = false;
       if (mouseMoveHandler) {
