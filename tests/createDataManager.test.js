@@ -32,4 +32,13 @@ describe('createDataManager', () => {
 
     vi.unstubAllEnvs();
   });
+
+  it('throws for an unknown VITE_DATA_BACKEND value', async () => {
+    vi.stubEnv('VITE_DATA_BACKEND', 'typo_backend');
+
+    const { createDataManager } = await import('../src/data/createDataManager.js');
+    await expect(createDataManager({})).rejects.toThrow(/Invalid VITE_DATA_BACKEND/);
+
+    vi.unstubAllEnvs();
+  });
 });

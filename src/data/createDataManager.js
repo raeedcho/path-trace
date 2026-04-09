@@ -21,7 +21,13 @@ export async function createDataManager(config) {
     return manager;
   }
 
-  const manager = new LocalDataManager();
-  await manager.initialize(config);
-  return manager;
+  if (!backend || backend === 'local') {
+    const manager = new LocalDataManager();
+    await manager.initialize(config);
+    return manager;
+  }
+
+  throw new Error(
+    `Invalid VITE_DATA_BACKEND value: "${String(backend)}". Expected "local" or "firebase".`
+  );
 }

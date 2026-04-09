@@ -41,6 +41,13 @@ describe('LocalDataManager', () => {
       await manager.saveTrial(trialData);
       expect(manager.data.trials[0]).toBe(trialData);
     });
+
+    it('strips points array from localStorage backup', async () => {
+      await manager.saveTrial({ globalIndex: 0, accuracy: 0.9, time: 1000, completed: true, points: [[0, 0], [1, 1]] });
+      const backup = JSON.parse(localStorage.getItem(`pathtrace_backup_${manager.getSessionId()}`));
+      expect(backup.trials[0]).not.toHaveProperty('points');
+      expect(backup.trials[0].accuracy).toBe(0.9);
+    });
   });
 
   describe('saveParticipantInfo', () => {
@@ -57,6 +64,13 @@ describe('LocalDataManager', () => {
       await manager.saveBlockSummary({ blockId: 'block_2', meanAccuracy: 0.85 });
       expect(manager.data.blockSummaries.length).toBe(2);
     });
+
+    it('writes block summaries to localStorage backup', async () => {
+      await manager.saveBlockSummary({ blockId: 'block_1', meanAccuracy: 0.9 });
+      const backup = JSON.parse(localStorage.getItem(`pathtrace_backup_${manager.getSessionId()}`));
+      expect(backup.blockSummaries).toHaveLength(1);
+      expect(backup.blockSummaries[0].blockId).toBe('block_1');
+    });
   });
 
   describe('saveExperimentComplete', () => {
@@ -64,6 +78,13 @@ describe('LocalDataManager', () => {
       const completionData = { totalTrials: 10, meanAccuracy: 0.88 };
       await manager.saveExperimentComplete(completionData);
       expect(manager.data.completionData).toEqual(completionData);
+    });
+
+    it('writes completionData to localStorage backup', async () => {
+      const completionData = { totalTrials: 10, meanAccuracy: 0.88 };
+      await manager.saveExperimentComplete(completionData);
+      const backup = JSON.parse(localStorage.getItem(`pathtrace_backup_${manager.getSessionId()}`));
+      expect(backup.completionData).toEqual(completionData);
     });
   });
 

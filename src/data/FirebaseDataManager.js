@@ -10,6 +10,15 @@ export class FirebaseDataManager {
   }
 
   async initialize(config) {
+    const required = ['apiKey', 'authDomain', 'databaseURL', 'projectId'];
+    const missing = required.filter(key => !config.firebase?.[key]);
+    if (missing.length > 0) {
+      throw new Error(
+        `FirebaseDataManager: missing required config fields: ${missing.join(', ')}. ` +
+        'Set these values in experimentConfig.js before deploying.'
+      );
+    }
+
     const { initializeApp } = await import('firebase/app');
     const { getDatabase, ref, set, update } = await import('firebase/database');
     const { getAuth, signInAnonymously, signOut } = await import('firebase/auth');

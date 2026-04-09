@@ -3,6 +3,7 @@
 export class LocalDataManager {
   constructor() {
     this.data = null;
+    this._trialSummaries = [];
   }
 
   async initialize(config) {
@@ -18,6 +19,7 @@ export class LocalDataManager {
       completionData: null,
       startTime: Date.now(),
     };
+    this._trialSummaries = [];
   }
 
   async saveParticipantInfo(info) {
@@ -27,16 +29,20 @@ export class LocalDataManager {
 
   async saveTrial(trialData) {
     this.data.trials.push(trialData);
+    const { points, ...summary } = trialData;
+    this._trialSummaries.push(summary);
     this._backupToLocalStorage();
     console.log(`[LocalData] Trial ${trialData.globalIndex} saved (${this.data.trials.length} total)`);
   }
 
   async saveBlockSummary(blockData) {
     this.data.blockSummaries.push(blockData);
+    this._backupToLocalStorage();
   }
 
   async saveExperimentComplete(data) {
     this.data.completionData = data;
+    this._backupToLocalStorage();
   }
 
   async finalize() {
@@ -66,8 +72,9 @@ export class LocalDataManager {
       const backup = {
         sessionId: this.data.sessionId,
         participantInfo: this.data.participantInfo,
-        trials: this.data.trials.map(({ points, ...summary }) => summary),
+        trials: this._trialSummaries,
         blockSummaries: this.data.blockSummaries,
+        completionData: this.data.completionData,
         startTime: this.data.startTime,
       };
       localStorage.setItem(
