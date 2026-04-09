@@ -1,5 +1,7 @@
 // src/data/FirebaseDataManager.js — Firebase Realtime Database backend
 
+const REQUIRED_FIREBASE_CONFIG_FIELDS = ['apiKey', 'authDomain', 'databaseURL', 'projectId'];
+
 export class FirebaseDataManager {
   constructor() {
     this.app = null;
@@ -10,8 +12,7 @@ export class FirebaseDataManager {
   }
 
   async initialize(config) {
-    const required = ['apiKey', 'authDomain', 'databaseURL', 'projectId'];
-    const missing = required.filter(key => !config.firebase?.[key]);
+    const missing = REQUIRED_FIREBASE_CONFIG_FIELDS.filter(key => !config.firebase?.[key]);
     if (missing.length > 0) {
       throw new Error(
         `FirebaseDataManager: missing required config fields: ${missing.join(', ')}. ` +
