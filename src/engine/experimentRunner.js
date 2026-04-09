@@ -66,11 +66,6 @@ export function createExperimentRunner({ trialRunner, overlayManager, progressDi
 
           progressDisplay.hide();
 
-          await overlayManager.waitForKeypress(
-            'instructions-overlay',
-            'Enter',
-          );
-          overlayManager.hide('instructions-overlay');
           overlayManager.show('instructions-overlay',
             `<div>
               <p>Your average accuracy in the previous block was ${avgAccuracy}%</p>

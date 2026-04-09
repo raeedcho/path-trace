@@ -150,6 +150,7 @@ function createMockDeps() {
         tooFastPenalty: 3000,
         tooSlowPenalty: 3000,
         straightLinePenalty: 5000,
+        accuracyTrailDuration: 1000,
       },
       trialFlow: {
         initial: 'IDLE',

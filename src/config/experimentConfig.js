@@ -21,7 +21,7 @@ export default {
 
   countdown: {
     holdDuration: 1000,
-    toneInterval: null,
+    toneInterval: 500,
     tones: [
       { color: 'countdown.ready', sound: 'ready' },
       { color: 'countdown.set',   sound: 'ready' },
@@ -37,6 +37,7 @@ export default {
     tooFastPenalty: 3000,
     tooSlowPenalty: 3000,
     straightLinePenalty: 5000,
+    accuracyTrailDuration: 1000,
   },
 
   blocks: [

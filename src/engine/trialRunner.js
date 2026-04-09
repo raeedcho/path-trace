@@ -161,7 +161,7 @@ export function createTrialRunner({ canvasManager, audioManager, overlayManager,
     const minTime = trialConfig.speedTier.min;
     const maxTime = trialConfig.speedTier.max;
     const meanTime = (minTime + maxTime) / 2;
-    const toneInterval = config.countdown.toneInterval ?? (meanTime / 2);
+    const toneInterval = config.countdown.toneInterval;
     const holdDuration = config.countdown.holdDuration;
 
     // --- HOLD PHASE ---
@@ -347,7 +347,7 @@ export function createTrialRunner({ canvasManager, audioManager, overlayManager,
       } else {
         // Good trial — optionally show accuracy trail briefly
         drawAccuracyTrail(pathCtx, canvasPoints, path);
-        await wait(1000);
+        await wait(config.feedback.accuracyTrailDuration);
       }
     }
 
