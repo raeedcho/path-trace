@@ -59,14 +59,17 @@ export function validateConfig(config, knownPaths = pathDefinitions) {
     }
   }
 
-  // Validate speedTiers have positive min/max
+  // Validate speedTiers have positive min/max and that min < max
   if (config.speedTiers) {
     for (const [name, tier] of Object.entries(config.speedTiers)) {
-      if (typeof tier.min === 'number' && tier.min <= 0) {
+      if (typeof tier.min !== 'number' || tier.min <= 0) {
         errors.push(`speedTiers.${name}.min must be a positive number`);
       }
-      if (typeof tier.max === 'number' && tier.max <= 0) {
+      if (typeof tier.max !== 'number' || tier.max <= 0) {
         errors.push(`speedTiers.${name}.max must be a positive number`);
+      }
+      if (typeof tier.min === 'number' && typeof tier.max === 'number' && tier.min >= tier.max) {
+        errors.push(`speedTiers.${name}: min (${tier.min}) must be less than max (${tier.max})`);
       }
     }
   }

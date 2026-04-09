@@ -76,6 +76,11 @@ export default {
       showFeedback: true,
       breakAfter: false,
     },
+    // TODO: expand to full 20-round test protocol matching legacy/website/public/js/game.js
+    // Original uses two shuffled speed-tier arrays (testTimes_1, testTimes_2) concatenated 4×:
+    //   testTimes_1: [veryFast×2, fast, medium, slow]
+    //   testTimes_2: [veryFast, fast×2, medium, slow]
+    // Resulting in 20 blocks × 16 trials = 320 test movements.
     {
       id: 'test_block_1',
       label: 'Testing Round 1',

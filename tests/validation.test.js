@@ -101,4 +101,21 @@ describe('validateConfig', () => {
     expect(result.valid).toBe(false);
     expect(result.errors.some(e => e.includes('slow') && e.includes('min'))).toBe(true);
   });
+
+  it('config with missing speed tier min returns { valid: false, errors: [...] }', () => {
+    const config = makeValidConfig();
+    delete config.speedTiers.slow.min;
+    const result = validateConfig(config, knownPaths);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some(e => e.includes('slow') && e.includes('min'))).toBe(true);
+  });
+
+  it('config with min >= max in speed tier returns { valid: false, errors: [...] }', () => {
+    const config = makeValidConfig();
+    config.speedTiers.slow.min = 1200;
+    config.speedTiers.slow.max = 800;
+    const result = validateConfig(config, knownPaths);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some(e => e.includes('slow') && e.includes('min') && e.includes('max'))).toBe(true);
+  });
 });
