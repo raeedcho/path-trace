@@ -66,12 +66,7 @@ export class LocalDataManager {
       const backup = {
         sessionId: this.data.sessionId,
         participantInfo: this.data.participantInfo,
-        trials: this.data.trials.map(t => ({
-          globalIndex: t.globalIndex,
-          accuracy: t.accuracy,
-          time: t.time,
-          completed: t.completed,
-        })),
+        trials: this.data.trials.map(({ points, ...summary }) => summary),
         blockSummaries: this.data.blockSummaries,
         startTime: this.data.startTime,
       };

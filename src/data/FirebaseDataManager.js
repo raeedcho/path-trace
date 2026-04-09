@@ -12,7 +12,7 @@ export class FirebaseDataManager {
   async initialize(config) {
     const { initializeApp } = await import('firebase/app');
     const { getDatabase, ref, set, update } = await import('firebase/database');
-    const { getAuth, signInAnonymously } = await import('firebase/auth');
+    const { getAuth, signInAnonymously, signOut } = await import('firebase/auth');
 
     this.app = initializeApp(config.firebase);
     this.db = getDatabase(this.app);
@@ -22,6 +22,7 @@ export class FirebaseDataManager {
     this._fbRef = ref;
     this._fbSet = set;
     this._fbUpdate = update;
+    this._fbSignOut = signOut;
 
     const credential = await signInAnonymously(this.auth);
     this.participantId = credential.user.uid;
@@ -62,8 +63,7 @@ export class FirebaseDataManager {
       console.error('[FirebaseData] Failed to write completion status:', err)
     );
 
-    const { signOut } = await import('firebase/auth');
-    signOut(this.auth).catch(err =>
+    this._fbSignOut(this.auth).catch(err =>
       console.error('[FirebaseData] Failed to sign out:', err)
     );
   }
