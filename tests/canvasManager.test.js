@@ -141,7 +141,16 @@ describe('createCursorManager', () => {
     expect(pos.y).toBe(0);
   });
 
-  it('resetCursorPosition updates the position', () => {
+  it('resetCursorPosition clamps to canvas bounds when bounds are set', () => {
+    const cm = createCursorManager();
+    cm.setCanvasBounds(800, 600);
+    cm.resetCursorPosition(1000, 700);
+    const pos = cm.getCursorPosition();
+    expect(pos.x).toBe(800);
+    expect(pos.y).toBe(600);
+  });
+
+  it('resetCursorPosition does not clamp when bounds are zero (unset)', () => {
     const cm = createCursorManager();
     cm.resetCursorPosition(100, 200);
     const pos = cm.getCursorPosition();

@@ -10,13 +10,11 @@ export function createProgressDisplay() {
   let timerEl = null;
   let roundEl = null;
   let goalTimeEl = null;
-  let hudEl = null;
 
   function _ensureElements() {
     if (!timerEl) timerEl = document.getElementById('timer');
     if (!roundEl) roundEl = document.getElementById('round');
     if (!goalTimeEl) goalTimeEl = document.getElementById('goalTime');
-    if (!hudEl) hudEl = document.getElementById('hud');
   }
 
   /**
@@ -27,7 +25,8 @@ export function createProgressDisplay() {
   function updateRound(current, total) {
     _ensureElements();
     if (roundEl) {
-      roundEl.textContent = `Movements Remaining: ${total - current}`;
+      const movementsRemaining = Math.max(0, total - current);
+      roundEl.textContent = `Movements Remaining: ${movementsRemaining}`;
     }
   }
 
@@ -44,7 +43,7 @@ export function createProgressDisplay() {
     const rounded = Math.round(elapsedMs);
     timerEl.textContent = `Your Movement Time: ${rounded} ms`;
 
-    if (elapsedMs >= minTime && elapsedMs <= maxTime) {
+    if (rounded >= minTime && rounded <= maxTime) {
       timerEl.style.color = COLORS.timerGood;
     } else {
       timerEl.style.color = COLORS.timerBad;

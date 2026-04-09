@@ -64,6 +64,13 @@ describe('createOverlayManager', () => {
     vi.useRealTimers();
   });
 
+  it('waitForKeypress resolves immediately when overlay not found', async () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    await om.waitForKeypress('nonexistent', ' ');
+    expect(warnSpy).toHaveBeenCalledWith('Overlay "#nonexistent" not found.');
+    warnSpy.mockRestore();
+  });
+
   it('waitForKeypress resolves when correct key is pressed', async () => {
     const promise = om.waitForKeypress('test-overlay', ' ');
     expect(document.getElementById('test-overlay').style.display).toBe('flex');
@@ -117,5 +124,19 @@ describe('createOverlayManager', () => {
     await om.showCountdown('nonexistent', 3);
     expect(warnSpy).toHaveBeenCalled();
     warnSpy.mockRestore();
+  });
+
+  it('showCountdown resolves immediately when seconds <= 0', async () => {
+    vi.useFakeTimers();
+    const resolved = vi.fn();
+    om.showCountdown('countdown-overlay', 0).then(resolved);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(resolved).toHaveBeenCalled();
+
+    resolved.mockClear();
+    om.showCountdown('countdown-overlay', -5).then(resolved);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(resolved).toHaveBeenCalled();
+    vi.useRealTimers();
   });
 });

@@ -59,6 +59,11 @@ export function createOverlayManager() {
    * @returns {Promise<void>}
    */
   function waitForKeypress(overlayId, key) {
+    const el = document.getElementById(overlayId);
+    if (!el) {
+      console.warn(`Overlay "#${overlayId}" not found.`);
+      return Promise.resolve();
+    }
     show(overlayId);
     return new Promise((resolve) => {
       function handler(e) {
@@ -82,6 +87,10 @@ export function createOverlayManager() {
     const el = document.getElementById(overlayId);
     if (!el) {
       console.warn(`Overlay "#${overlayId}" not found.`);
+      return Promise.resolve();
+    }
+
+    if (seconds <= 0) {
       return Promise.resolve();
     }
 

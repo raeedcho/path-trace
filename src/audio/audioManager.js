@@ -27,6 +27,11 @@ export function createAudioManager() {
     if (audioCtx) return;
     try {
       audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume().catch((err) => {
+          console.warn('Failed to resume AudioContext:', err.message);
+        });
+      }
     } catch (err) {
       console.warn('Web Audio API not available:', err.message);
     }

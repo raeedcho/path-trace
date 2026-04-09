@@ -64,6 +64,19 @@ describe('createProgressDisplay', () => {
     expect(document.getElementById('timer').style.color).toMatch(/^(#66FF99|rgb\(102,\s*255,\s*153\))$/i);
   });
 
+  it('updateRound clamps to 0 when current exceeds total', () => {
+    pd.updateRound(20, 16);
+    expect(document.getElementById('round').textContent).toBe('Movements Remaining: 0');
+  });
+
+  it('updateTimer shows green when rounded value lands on boundary', () => {
+    // 799.6 rounds to 800 — should be green, not red
+    pd.updateTimer(799.6, 800, 1200);
+    const timerEl = document.getElementById('timer');
+    expect(timerEl.textContent).toBe('Your Movement Time: 800 ms');
+    expect(timerEl.style.color).toMatch(/^(#66FF99|rgb\(102,\s*255,\s*153\))$/i);
+  });
+
   it('updateTimer rounds to nearest ms', () => {
     pd.updateTimer(850.7, 800, 1200);
     expect(document.getElementById('timer').textContent).toBe('Your Movement Time: 851 ms');

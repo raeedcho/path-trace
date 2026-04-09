@@ -1,6 +1,6 @@
 // src/rendering/drawFeedback.js — Accuracy visualization, color-coded trail
 
-import { COLORS } from '../config/constants.js';
+import { COLORS, DEFAULTS } from '../config/constants.js';
 
 /**
  * 5-stop color scale for accuracy visualization.
@@ -82,8 +82,8 @@ export function drawAccuracyTrail(ctx, points, path, colorScale) {
 
   for (const point of points) {
     const dist = path.getDistanceFromPath(point);
-    // Map distance to accuracy: 0 distance = 100 accuracy, ≥100 distance = 0 accuracy
-    const accuracy = Math.max(0, 100 - dist);
+    // Map distance to accuracy: 0 distance = 100% accuracy, ≥maxAccuracyDistance = 0%
+    const accuracy = Math.max(0, (DEFAULTS.maxAccuracyDistance - dist) / DEFAULTS.maxAccuracyDistance * 100);
 
     ctx.strokeStyle = 'black';
     ctx.lineWidth = 1;

@@ -51,6 +51,34 @@ describe('createAudioManager', () => {
     expect(typeof am.playSound).toBe('function');
   });
 
+  it('initialize calls resume() when context starts suspended', () => {
+    const resumeSpy = vi.fn().mockResolvedValue(undefined);
+    globalThis.AudioContext = class MockSuspendedAudioContext {
+      constructor() {
+        Object.assign(this, mockAudioCtx);
+        this.state = 'suspended';
+        this.resume = resumeSpy;
+      }
+    };
+    const am = createAudioManager();
+    am.initialize();
+    expect(resumeSpy).toHaveBeenCalled();
+  });
+
+  it('initialize does not call resume() when context is running', () => {
+    const resumeSpy = vi.fn();
+    globalThis.AudioContext = class MockRunningAudioContext {
+      constructor() {
+        Object.assign(this, mockAudioCtx);
+        this.state = 'running';
+        this.resume = resumeSpy;
+      }
+    };
+    const am = createAudioManager();
+    am.initialize();
+    expect(resumeSpy).not.toHaveBeenCalled();
+  });
+
   it('initialize creates an AudioContext', () => {
     const am = createAudioManager();
     am.initialize();

@@ -170,6 +170,12 @@ export function createCursorManager(options = {}) {
       return Promise.resolve();
     }
 
+    // Remove any previously registered handler to avoid duplicate listeners.
+    if (lockChangeHandler) {
+      document.removeEventListener('pointerlockchange', lockChangeHandler);
+      lockChangeHandler = null;
+    }
+
     return new Promise((resolve, reject) => {
       lockChangeHandler = () => {
         _onLockChange();
@@ -221,8 +227,8 @@ export function createCursorManager(options = {}) {
   }
 
   function resetCursorPosition(newX, newY) {
-    x = newX;
-    y = newY;
+    x = canvasWidth > 0 ? clamp(newX, 0, canvasWidth) : newX;
+    y = canvasHeight > 0 ? clamp(newY, 0, canvasHeight) : newY;
   }
 
   function setCanvasBounds(w, h) {

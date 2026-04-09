@@ -15,4 +15,5 @@ export const DEFAULTS = {
   cursorRadius: 5,
   holdDuration: 1000,
   scaleFactor: 2.4,
+  maxAccuracyDistance: 100,
 };
