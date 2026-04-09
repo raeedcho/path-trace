@@ -26,7 +26,7 @@ describe('pathRegistry', () => {
   });
 
   it('createPath("line", config) returns a LinePath instance', () => {
-    const path = createPath('line', { startX: 0, startY: 0, endX: 100, endY: 0 });
+    const path = createPath('line', { centerX: 0, centerY: 0, offsetX: 0, offsetY: 0, endOffsetX: 100, endOffsetY: 0 });
     expect(path).toBeInstanceOf(LinePath);
   });
 
@@ -234,10 +234,12 @@ describe('VShapePath', () => {
 
 describe('LinePath', () => {
   const line = new LinePath({
-    startX: 100,
-    startY: 200,
-    endX: 300,
-    endY: 200,
+    centerX: 200,
+    centerY: 200,
+    offsetX: -100,
+    offsetY: 0,
+    endOffsetX: 100,
+    endOffsetY: 0,
   });
 
   it('getPointAtProgress(0) returns start', () => {
@@ -278,7 +280,7 @@ describe('LinePath', () => {
 
   it('getTargetPosition returns stored target dimensions', () => {
     const lineWithDims = new LinePath({
-      startX: 0, startY: 0, endX: 100, endY: 0,
+      centerX: 0, centerY: 0, offsetX: 0, offsetY: 0, endOffsetX: 100, endOffsetY: 0,
       targetWidth: 22, targetHeight: 200,
     });
     const target = lineWithDims.getTargetPosition();

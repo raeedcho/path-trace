@@ -4,8 +4,9 @@ import '../paths/ArcPath.js';
 import '../paths/VShapePath.js';
 import '../paths/LinePath.js';
 
-// centerX/centerY (and startX/startY for lines) are injected at runtime
-// by the engine based on canvas size, not stored in definitions.
+// centerX/centerY are injected at runtime by the engine based on canvas size.
+// targetWidth/targetHeight are injected from DEFAULTS in constants.js.
+// All path types accept { centerX, centerY, ...params } uniformly.
 export const pathDefinitions = {
   arc_default: {
     type: 'arc',
@@ -17,6 +18,6 @@ export const pathDefinitions = {
   },
   line_horizontal: {
     type: 'line',
-    params: { startX: -166, startY: 0, endX: 166, endY: 0 },
+    params: { offsetX: -166, offsetY: 0, endOffsetX: 166, endOffsetY: 0 },
   },
 };

@@ -6,18 +6,20 @@ import { registerPath } from './pathRegistry.js';
 export class LinePath {
   /**
    * @param {object} config
-   * @param {number} config.startX
-   * @param {number} config.startY
-   * @param {number} config.endX
-   * @param {number} config.endY
+   * @param {number} config.centerX — canvas X coordinate of the path center
+   * @param {number} config.centerY — canvas Y coordinate of the path center
+   * @param {number} config.offsetX — start point X offset from center
+   * @param {number} config.offsetY — start point Y offset from center
+   * @param {number} config.endOffsetX — end point X offset from center
+   * @param {number} config.endOffsetY — end point Y offset from center
    * @param {number} [config.targetWidth=0] — target zone width for hit detection
    * @param {number} [config.targetHeight=0] — target zone height for hit detection
    */
-  constructor({ startX, startY, endX, endY, targetWidth = 0, targetHeight = 0 }) {
-    this.startX = startX;
-    this.startY = startY;
-    this.endX = endX;
-    this.endY = endY;
+  constructor({ centerX, centerY, offsetX, offsetY, endOffsetX, endOffsetY, targetWidth = 0, targetHeight = 0 }) {
+    this.startX = centerX + offsetX;
+    this.startY = centerY + offsetY;
+    this.endX = centerX + endOffsetX;
+    this.endY = centerY + endOffsetY;
     this.targetWidth = targetWidth;
     this.targetHeight = targetHeight;
   }
