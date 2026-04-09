@@ -113,4 +113,15 @@ export default {
     completionCode: 'C9AOT8TW',
     collectFeedback: true,
   },
+  
+  // Set these values before deploying to production
+  firebase: {
+    apiKey: '',
+    authDomain: '',
+    projectId: '',
+    storageBucket: '',
+    messagingSenderId: '',
+    appId: '',
+    databaseURL: '',
+  },
 };
