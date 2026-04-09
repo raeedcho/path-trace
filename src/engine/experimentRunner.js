@@ -33,7 +33,7 @@ export function createExperimentRunner({ trialRunner, overlayManager, progressDi
       }
 
       // Update progress display
-      progressDisplay.updateRound(i, totalTrials);
+      progressDisplay.updateRound(i + 1, totalTrials);
 
       // Run the trial
       const result = await trialRunner.runTrial(trial);
@@ -80,9 +80,10 @@ export function createExperimentRunner({ trialRunner, overlayManager, progressDi
           progressDisplay.show();
         }
 
-        // Break screen
-        if (trial.breakAfter && nextTrial) {
-          const breakSeconds = Math.ceil((trial.breakDuration ?? 10000) / 1000);
+        // Break screen — only if an explicit breakDuration is configured
+        const hasExplicitBreakDuration = Number.isFinite(trial.breakDuration) && trial.breakDuration > 0;
+        if (trial.breakAfter && nextTrial && hasExplicitBreakDuration) {
+          const breakSeconds = Math.ceil(trial.breakDuration / 1000);
           progressDisplay.hide();
           await overlayManager.showCountdown('break-overlay', breakSeconds);
           progressDisplay.show();

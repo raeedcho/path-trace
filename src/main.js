@@ -120,13 +120,19 @@ async function showInstructions(overlayManager) {
 async function showCompletion(overlayManager, dataManager, cfg) {
   return new Promise((resolve) => {
     const code = cfg.prolific?.completionCode || 'COMPLETE';
+    const isLocalBackend = !import.meta.env.VITE_DATA_BACKEND || import.meta.env.VITE_DATA_BACKEND === 'local';
+    const submitLabel = isLocalBackend ? 'Submit & Download Data' : 'Submit';
+    const confirmMsg = isLocalBackend
+      ? 'Data downloaded. You may close this tab.'
+      : 'Your data has been saved. You may close this tab.';
+
     overlayManager.show('completion-overlay', `
       <div style="max-width:500px;text-align:center">
         <h2>Experiment Complete!</h2>
         <p>Your completion code: <b>${code}</b></p>
         <p>Thank you for participating.</p>
         <textarea id="feedback-input" placeholder="Optional feedback..." rows="3" style="width:100%"></textarea><br/><br/>
-        <button id="feedback-submit">Submit &amp; Download Data</button>
+        <button id="feedback-submit">${submitLabel}</button>
         <p id="feedback-thanks"></p>
       </div>
     `);
@@ -135,7 +141,7 @@ async function showCompletion(overlayManager, dataManager, cfg) {
       const feedback = document.getElementById('feedback-input').value.trim();
       await dataManager.saveExperimentComplete({ feedback, completedAt: new Date().toISOString() });
       await dataManager.finalize();
-      document.getElementById('feedback-thanks').textContent = 'Data downloaded. You may close this tab.';
+      document.getElementById('feedback-thanks').textContent = confirmMsg;
       resolve();
     });
   });
@@ -180,22 +186,29 @@ async function main() {
   cursorManager.setCanvasBounds(dims.width, dims.height);
 
   const mouseCanvas = document.getElementById('mouseCanvas');
-  await cursorManager.requestPointerLock(mouseCanvas, {
-    unadjustedMovement: config.pointer.useUnadjustedMovement,
-  });
+  if (config.pointer.usePointerLock) {
+    await cursorManager.requestPointerLock(mouseCanvas, {
+      unadjustedMovement: config.pointer.useUnadjustedMovement,
+    });
 
-  // Handle pointer lock loss
-  cursorManager.setOnLockLost(() => {
-    if (experimentInProgress) {
-      overlayManager.show('pointer-lock-overlay');
-      mouseCanvas.addEventListener('click', async () => {
-        await cursorManager.requestPointerLock(mouseCanvas, {
-          unadjustedMovement: config.pointer.useUnadjustedMovement,
-        });
-        overlayManager.hide('pointer-lock-overlay');
-      }, { once: true });
-    }
-  });
+    // Handle pointer lock loss
+    cursorManager.setOnLockLost(() => {
+      if (experimentInProgress) {
+        overlayManager.show('pointer-lock-overlay');
+        mouseCanvas.addEventListener('click', async () => {
+          try {
+            await cursorManager.requestPointerLock(mouseCanvas, {
+              unadjustedMovement: config.pointer.useUnadjustedMovement,
+            });
+            overlayManager.hide('pointer-lock-overlay');
+          } catch (err) {
+            console.error('Failed to restore pointer lock:', err);
+            // Keep overlay visible so participant can retry by clicking again
+          }
+        }, { once: true });
+      }
+    });
+  }
 
   // 7. Generate trial sequence and run experiment
   experimentInProgress = true;

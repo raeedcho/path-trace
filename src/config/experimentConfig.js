@@ -29,6 +29,10 @@ export default {
     ],
   },
 
+  tracing: {
+    maxDurationMultiplier: 3,  // max tracing time = maxTime * multiplier before TIMEOUT is sent
+  },
+
   feedback: {
     tooFastMessage: 'Move slower!',
     tooSlowMessage: 'Move faster!',
@@ -99,7 +103,7 @@ export default {
     states: {
       IDLE:            { on: { BEGIN: 'HOLD' } },
       HOLD:            { on: { HOLD_COMPLETE: 'COUNTDOWN', HOLD_BROKEN: 'HOLD' } },
-      COUNTDOWN:       { on: { COUNTDOWN_DONE: 'TRACING' } },
+      COUNTDOWN:       { on: { COUNTDOWN_DONE: 'TRACING', HOLD_BROKEN: 'HOLD' } },
       TRACING:         { on: { TARGET_HIT: 'FEEDBACK', TIMEOUT: 'FEEDBACK' } },
       FEEDBACK:        { on: { FEEDBACK_DONE: 'STAGE_CHECK' } },
       STAGE_CHECK:     { on: { NEXT_STAGE: 'RETURN_TO_START', TRIAL_COMPLETE: 'TRIAL_END' } },

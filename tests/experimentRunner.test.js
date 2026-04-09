@@ -77,8 +77,8 @@ describe('createExperimentRunner', () => {
 
     await runner.run(sequence);
 
-    expect(deps.progressDisplay.updateRound).toHaveBeenCalledWith(0, 2);
     expect(deps.progressDisplay.updateRound).toHaveBeenCalledWith(1, 2);
+    expect(deps.progressDisplay.updateRound).toHaveBeenCalledWith(2, 2);
   });
 
   it('saves block summary at end of block', async () => {
@@ -128,6 +128,20 @@ describe('createExperimentRunner', () => {
     expect(deps.overlayManager.showCountdown).not.toHaveBeenCalled();
   });
 
+  it('does not show break if breakDuration is null or missing', async () => {
+    const deps = createMockDeps();
+    const runner = createExperimentRunner(deps);
+
+    const sequence = [
+      { globalIndex: 0, blockId: 'b1', blockLabel: 'Block 1', speedTier: { min: 800, max: 1200 }, isLastInBlock: true, breakAfter: true, breakDuration: null },
+      { globalIndex: 1, blockId: 'b2', blockLabel: 'Block 2', speedTier: { min: 640, max: 960 }, isLastInBlock: true, breakAfter: false },
+    ];
+
+    await runner.run(sequence);
+
+    // No break shown because breakDuration is null
+    expect(deps.overlayManager.showCountdown).not.toHaveBeenCalled();
+  });
   it('calls saveExperimentComplete at the end', async () => {
     const deps = createMockDeps();
     const runner = createExperimentRunner(deps);

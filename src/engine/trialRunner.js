@@ -268,7 +268,13 @@ export function createTrialRunner({ canvasManager, audioManager, overlayManager,
 
     const pathCtx = canvasManager.getContext('path');
 
+    // Max tracing duration before a TIMEOUT is sent (prevents indefinite hang)
+    const maxTracingTime = maxTime * (config.tracing?.maxDurationMultiplier ?? 3);
+
     await new Promise((resolve) => {
+      // Declared before createGameLoop so the closure can reference it via clearTimeout
+      let tracingTimeoutId = null;
+
       const loop = createGameLoop(
         (deltaTime) => {
           const elapsed = timer.elapsed();
@@ -302,6 +308,12 @@ export function createTrialRunner({ canvasManager, audioManager, overlayManager,
           if (isMouseOnTarget(pos.x, pos.y, prevCursorX, prevCursorY, target)) {
             hitTarget = true;
             elapsedAtEnd = elapsed;
+            // Ensure mean beep plays even on an early hit
+            if (!soundPlayed) {
+              audioManager.playDefaultTone('mean');
+              soundPlayed = true;
+            }
+            clearTimeout(tracingTimeoutId);
             loop.stop();
             drawTargetHit(pathCtx, target);
             stateMachine.send('TARGET_HIT');
@@ -317,6 +329,18 @@ export function createTrialRunner({ canvasManager, audioManager, overlayManager,
           cursorManager.drawCursor(mouseCtx);
         },
       );
+
+      // Timeout guard: if participant never reaches the target, end tracing after maxTracingTime
+      tracingTimeoutId = setTimeout(() => {
+        elapsedAtEnd = timer.elapsed();
+        if (!soundPlayed) {
+          audioManager.playDefaultTone('mean');
+          soundPlayed = true;
+        }
+        loop.stop();
+        stateMachine.send('TIMEOUT');
+        resolve();
+      }, maxTracingTime);
 
       loop.start();
     });
