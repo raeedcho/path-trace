@@ -1,22 +1,23 @@
 // src/config/pathDefinitions.js — Maps path names to constructor params
 
-const pathDefinitions = {
+import '../paths/ArcPath.js';
+import '../paths/VShapePath.js';
+import '../paths/LinePath.js';
+
+// centerX/centerY are injected at runtime by the engine based on canvas size.
+// targetWidth/targetHeight are injected from DEFAULTS in constants.js.
+// All path types accept { centerX, centerY, ...params } uniformly.
+export const pathDefinitions = {
   arc_default: {
     type: 'arc',
-    params: { radius: 200, startAngle: Math.PI, endAngle: 0 },
-  },
-  line_horizontal: {
-    type: 'line',
-    params: { length: 400, angle: 0 },
+    params: { radius: 166, startAngle: Math.PI, endAngle: 2 * Math.PI },
   },
   vshape_default: {
     type: 'vshape',
-    params: { armLength: 200, angle: Math.PI / 3 },
+    params: { halfWidth: 166, peakHeight: 166, angle: 0 },
+  },
+  line_horizontal: {
+    type: 'line',
+    params: { offsetX: -166, offsetY: 0, endOffsetX: 166, endOffsetY: 0 },
   },
 };
-
-export default pathDefinitions;
-
-export function getPathNames() {
-  return Object.keys(pathDefinitions);
-}
