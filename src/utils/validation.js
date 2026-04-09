@@ -1,6 +1,6 @@
 // src/utils/validation.js — Config schema checks
 
-import pathDefinitions from '../config/pathDefinitions.js';
+import { pathDefinitions } from '../config/pathDefinitions.js';
 
 /**
  * Validates experiment config at startup.
