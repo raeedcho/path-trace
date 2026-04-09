@@ -75,6 +75,8 @@ body {
   justify-content: center;
   align-items: center;
   z-index: 10;
+  background-color: rgba(0, 0, 0, 0.5);
+  color: white;
 }
 
 /* Basic typography for overlay text */
@@ -86,4 +88,10 @@ body {
 .overlay p {
   font-size: 1.25rem;
   line-height: 1.6;
+}
+
+/* Pointer lock overlay */
+#pointer-lock-overlay {
+  z-index: 20;
+  cursor: pointer;
 }
