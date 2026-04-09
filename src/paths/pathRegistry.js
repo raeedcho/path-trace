@@ -1,13 +1,17 @@
 // src/paths/pathRegistry.js — name → class mapping (Strategy pattern)
 
-const registry = {};
+const registry = Object.create(null);
 
 /**
  * Register a path class under a given name.
+ * Throws if a class is already registered under that name.
  * @param {string} name
  * @param {Function} PathClass
  */
 export function registerPath(name, PathClass) {
+  if (registry[name]) {
+    throw new Error(`Path type "${name}" is already registered.`);
+  }
   registry[name] = PathClass;
 }
 

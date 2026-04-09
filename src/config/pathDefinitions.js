@@ -17,6 +17,6 @@ export const pathDefinitions = {
   },
   line_horizontal: {
     type: 'line',
-    params: { offsetX: -166, offsetY: 0, endOffsetX: 166, endOffsetY: 0 },
+    params: { startX: -166, startY: 0, endX: 166, endY: 0 },
   },
 };

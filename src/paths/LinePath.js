@@ -106,8 +106,8 @@ export class LinePath {
 
     // Target rings at endpoint
     const target = this.getTargetPosition();
-    const ringWidth = style.targetWidth || 22;
-    const ringHeight = style.targetHeight || 200;
+    const ringWidth = target.width || style.targetWidth || 22;
+    const ringHeight = target.height || style.targetHeight || 200;
     ctx.save();
     ctx.translate(target.x, target.y);
     ctx.rotate(target.angle);

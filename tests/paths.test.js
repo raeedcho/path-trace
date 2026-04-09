@@ -34,6 +34,10 @@ describe('pathRegistry', () => {
     expect(() => createPath('nonexistent', {})).toThrow('Unknown path type: "nonexistent"');
     expect(() => createPath('nonexistent', {})).toThrow(/Available:/);
   });
+
+  it('registerPath throws on duplicate registration', () => {
+    expect(() => registerPath('arc', ArcPath)).toThrow('Path type "arc" is already registered.');
+  });
 });
 
 // --- ArcPath tests ---

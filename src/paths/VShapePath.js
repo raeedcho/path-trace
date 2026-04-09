@@ -24,8 +24,8 @@ export class VShapePath {
     this.targetHeight = targetHeight;
 
     // Compute three unrotated points relative to center:
-    // start (top-left), peak (bottom-center), end (top-right)
-    // Convention: peak points up means peak is above center (negative Y)
+    // start (left-center), peak (top-center), end (right-center)
+    // Convention: in local canvas coordinates, negative Y is above the center
     const rawStart = { x: -halfWidth, y: 0 };
     const rawPeak = { x: 0, y: -peakHeight };
     const rawEnd = { x: halfWidth, y: 0 };
@@ -192,8 +192,8 @@ export class VShapePath {
 
     // Target rings at endpoint
     const target = this.getTargetPosition();
-    const ringWidth = style.targetWidth || 22;
-    const ringHeight = style.targetHeight || 200;
+    const ringWidth = target.width || style.targetWidth || 22;
+    const ringHeight = target.height || style.targetHeight || 200;
     ctx.save();
     ctx.translate(target.x, target.y);
     ctx.rotate(target.angle);
