@@ -119,10 +119,11 @@ function isMouseOnTarget(currX, currY, prevX, prevY, target) {
  */
 function computeAccuracy(canvasPoints, path) {
   if (canvasPoints.length === 0) return 0;
+  const maxDist = DEFAULTS.maxAccuracyDistance;
   let totalAcc = 0;
   for (const p of canvasPoints) {
     const dist = path.getDistanceFromPath(p);
-    totalAcc += Math.max(0, 100 - dist);
+    totalAcc += Math.max(0, (maxDist - dist) / maxDist * 100);
   }
   return parseFloat((totalAcc / canvasPoints.length).toFixed(2));
 }
@@ -161,91 +162,98 @@ export function createTrialRunner({ canvasManager, audioManager, overlayManager,
     const minTime = trialConfig.speedTier.min;
     const maxTime = trialConfig.speedTier.max;
     const meanTime = (minTime + maxTime) / 2;
-    const toneInterval = config.countdown.toneInterval;
+    // toneInterval from config; null means auto-scale to meanTime (matches original countdown rhythm)
+    const toneInterval = config.countdown.toneInterval ?? meanTime;
     const holdDuration = config.countdown.holdDuration;
 
-    // --- HOLD PHASE ---
-    stateMachine.send('BEGIN');
-
-    await new Promise((resolve) => {
-      let holdStart = null;
-      let holdTimer = null;
-
-      const checkHold = () => {
-        const pos = cursorManager.getCursorPosition();
-        const dist = distance(pos.x, pos.y, startPos.x, startPos.y);
-        if (dist <= DEFAULTS.startCircleRadius) {
-          if (holdStart === null) {
-            holdStart = performance.now();
-            holdTimer = setTimeout(() => {
-              unsubscribe();
-              resolve();
-            }, holdDuration);
-          }
-        } else {
-          holdStart = null;
-          if (holdTimer !== null) {
-            clearTimeout(holdTimer);
-            holdTimer = null;
-          }
-        }
-      };
-
-      const unsubscribe = cursorManager.onCursorMove(checkHold);
-      // Also check immediately in case cursor is already in position
-      checkHold();
-    });
-
-    stateMachine.send('HOLD_COMPLETE');
-
-    // --- COUNTDOWN PHASE ---
+    // --- HOLD + COUNTDOWN (looped until countdown completes without abort) ---
     const tones = config.countdown.tones;
     const mainCtx = canvasManager.getContext('main');
 
-    for (let i = 0; i < tones.length; i++) {
-      const tone = tones[i];
-      // Resolve color from dot-path notation like 'countdown.ready'
-      const colorParts = tone.color.split('.');
-      let color = COLORS;
-      for (const part of colorParts) {
-        color = color?.[part];
-      }
+    let countdownCompleted = false;
+    while (!countdownCompleted) {
+      // --- HOLD PHASE ---
+      stateMachine.send('BEGIN');
 
-      // Draw colored start circle
-      mainCtx.fillStyle = color || '#fff';
-      mainCtx.beginPath();
-      mainCtx.arc(startPos.x, startPos.y, DEFAULTS.startCircleRadius, 0, 2 * Math.PI);
-      mainCtx.fill();
-      mainCtx.strokeStyle = '#000';
-      mainCtx.lineWidth = 1;
-      mainCtx.stroke();
+      await new Promise((resolve) => {
+        let holdTimer = null;
 
-      audioManager.playDefaultTone(tone.sound);
+        const checkHold = () => {
+          const pos = cursorManager.getCursorPosition();
+          const dist = distance(pos.x, pos.y, startPos.x, startPos.y);
+          if (dist <= DEFAULTS.startCircleRadius) {
+            if (holdTimer === null) {
+              holdTimer = setTimeout(() => {
+                unsubscribe();
+                resolve();
+              }, holdDuration);
+            }
+          } else {
+            if (holdTimer !== null) {
+              clearTimeout(holdTimer);
+              holdTimer = null;
+            }
+          }
+        };
 
-      // Check if cursor left during countdown
-      if (i < tones.length - 1) {
-        await wait(toneInterval);
+        const unsubscribe = cursorManager.onCursorMove(checkHold);
+        // Also check immediately in case cursor is already in position
+        checkHold();
+      });
 
-        const pos = cursorManager.getCursorPosition();
-        const dist = distance(pos.x, pos.y, startPos.x, startPos.y);
-        if (dist > DEFAULTS.startCircleRadius) {
-          // Cursor left during countdown — abort and restart hold
-          stateMachine.send('HOLD_BROKEN');
-          // Redraw the start circle in its default color
-          mainCtx.fillStyle = COLORS.startCircle;
-          mainCtx.beginPath();
-          mainCtx.arc(startPos.x, startPos.y, DEFAULTS.startCircleRadius, 0, 2 * Math.PI);
-          mainCtx.fill();
-          mainCtx.strokeStyle = '#000';
-          mainCtx.lineWidth = 1;
-          mainCtx.stroke();
-          // Recursively retry this stage
-          return runStage(path, trialConfig, startPos, target, stateMachine);
+      stateMachine.send('HOLD_COMPLETE');
+
+      // --- COUNTDOWN PHASE ---
+      let aborted = false;
+
+      for (let i = 0; i < tones.length; i++) {
+        const tone = tones[i];
+        // Resolve color from dot-path notation like 'countdown.ready'
+        const colorParts = tone.color.split('.');
+        let color = COLORS;
+        for (const part of colorParts) {
+          color = color?.[part];
+        }
+
+        // Draw colored start circle
+        mainCtx.fillStyle = color || '#fff';
+        mainCtx.beginPath();
+        mainCtx.arc(startPos.x, startPos.y, DEFAULTS.startCircleRadius, 0, 2 * Math.PI);
+        mainCtx.fill();
+        mainCtx.strokeStyle = '#000';
+        mainCtx.lineWidth = 1;
+        mainCtx.stroke();
+
+        audioManager.playDefaultTone(tone.sound);
+
+        // Wait between tones (except after the final "go" tone)
+        if (i < tones.length - 1) {
+          await wait(toneInterval);
+
+          const pos = cursorManager.getCursorPosition();
+          const dist = distance(pos.x, pos.y, startPos.x, startPos.y);
+          if (dist > DEFAULTS.startCircleRadius) {
+            // Cursor left during countdown — abort and restart hold
+            stateMachine.send('HOLD_BROKEN');
+            // Redraw the start circle in its default color
+            mainCtx.fillStyle = COLORS.startCircle;
+            mainCtx.beginPath();
+            mainCtx.arc(startPos.x, startPos.y, DEFAULTS.startCircleRadius, 0, 2 * Math.PI);
+            mainCtx.fill();
+            mainCtx.strokeStyle = '#000';
+            mainCtx.lineWidth = 1;
+            mainCtx.stroke();
+            aborted = true;
+            break;
+          }
         }
       }
-    }
 
-    stateMachine.send('COUNTDOWN_DONE');
+      if (!aborted) {
+        countdownCompleted = true;
+        stateMachine.send('COUNTDOWN_DONE');
+      }
+    }
 
     // --- TRACING PHASE ---
     const points = [];
@@ -412,6 +420,8 @@ export function createTrialRunner({ canvasManager, audioManager, overlayManager,
           path: '#000',
         },
         startCircleRadius: DEFAULTS.startCircleRadius,
+        targetWidth: DEFAULTS.targetWidth,
+        targetHeight: DEFAULTS.targetHeight,
       });
 
       const startPos = path.getPointAtProgress(0);

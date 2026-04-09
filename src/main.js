@@ -82,6 +82,7 @@ async function collectParticipantInfo(overlayManager) {
       }
 
       overlayManager.hide('instructions-overlay');
+      // TODO: implement Edinburgh Handedness Inventory screening (see legacy/website/public/index.html)
       // handednessMeasure: 100 = fully right-handed (Edinburgh Handedness Inventory score).
       // Full screening is deferred; default assumes right-handed as required by study protocol.
       resolve({ age: parseInt(age, 10), gender, handedness, handednessMeasure: 100, device });

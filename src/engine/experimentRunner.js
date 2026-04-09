@@ -92,6 +92,8 @@ export function createExperimentRunner({ trialRunner, overlayManager, progressDi
 
     // Experiment complete
     progressDisplay.hide();
+    // Safety: record completion timestamp even if participant closes before feedback submission.
+    // main.js will overwrite this with feedback data if the participant completes normally.
     await dataManager.saveExperimentComplete({ completedAt: new Date().toISOString() });
   }
 

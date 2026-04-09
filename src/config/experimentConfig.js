@@ -21,7 +21,7 @@ export default {
 
   countdown: {
     holdDuration: 1000,
-    toneInterval: 500,
+    toneInterval: null,  // null = auto-scale to meanTime per speed tier (matches original rhythm)
     tones: [
       { color: 'countdown.ready', sound: 'ready' },
       { color: 'countdown.set',   sound: 'ready' },
