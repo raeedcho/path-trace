@@ -17,10 +17,14 @@ export function createStateMachine(config) {
       const guard = typeof transition === 'object' ? transition.guard : null;
       if (guard && !guard(payload)) return currentState;
 
+      if (!config.states[target]) {
+        throw new Error(`State machine: transition target "${target}" does not exist in config.states`);
+      }
+
       const prev = currentState;
       stateConfig.onExit?.(payload);
       currentState = target;
-      config.states[currentState]?.onEnter?.(payload);
+      config.states[currentState].onEnter?.(payload);
       listeners.forEach(fn => fn(currentState, prev, event, payload));
       return currentState;
     },

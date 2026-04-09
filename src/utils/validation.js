@@ -22,19 +22,35 @@ export function validateConfig(config, knownPaths = pathDefinitions) {
         errors.push(`Block "${block.id}": unknown speedTier "${block.speedTier}"`);
       }
 
+      // trials must be a non-empty array for sequence generation
+      if (!Array.isArray(block.trials) || block.trials.length === 0) {
+        errors.push(`Block "${block.id}": trials must be a non-empty array`);
+        continue;
+      }
+
       // Validate each trial definition in the block
-      if (Array.isArray(block.trials)) {
-        for (const trialDef of block.trials) {
-          if (trialDef.stages) {
+      for (const trialDef of block.trials) {
+        if (!Number.isInteger(trialDef.count) || trialDef.count <= 0) {
+          errors.push(`Block "${block.id}": trial count must be a positive integer`);
+        }
+
+        if (trialDef.stages !== undefined) {
+          if (!Array.isArray(trialDef.stages)) {
+            errors.push(`Block "${block.id}": stages must be an array`);
+          } else {
             for (const stage of trialDef.stages) {
-              if (!pathNames.has(stage.path)) {
+              if (typeof stage.path !== 'string') {
+                errors.push(`Block "${block.id}": stage.path must be a string`);
+              } else if (!pathNames.has(stage.path)) {
                 errors.push(`Block "${block.id}": unknown path "${stage.path}" in stages`);
               }
             }
-          } else if (trialDef.path) {
-            if (!pathNames.has(trialDef.path)) {
-              errors.push(`Block "${block.id}": unknown path "${trialDef.path}"`);
-            }
+          }
+        } else if (trialDef.path !== undefined) {
+          if (typeof trialDef.path !== 'string') {
+            errors.push(`Block "${block.id}": path must be a string`);
+          } else if (!pathNames.has(trialDef.path)) {
+            errors.push(`Block "${block.id}": unknown path "${trialDef.path}"`);
           }
         }
       }

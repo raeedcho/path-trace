@@ -15,18 +15,40 @@ function shuffleArray(array) {
 
 /**
  * Generates a flat array of trial objects from experiment config.
+ * Callers should run validateConfig() first for detailed error messages.
+ * This function throws TypeError on structurally invalid input.
  * @param {object} config - The experiment config object
  * @returns {Array<object>} Ordered list of trial objects
  */
 export function generateTrialSequence(config) {
+  if (config === null || typeof config !== 'object' || Array.isArray(config)) {
+    throw new TypeError('config must be an object');
+  }
+  if (!Array.isArray(config.blocks)) {
+    throw new TypeError('config.blocks must be an array');
+  }
+  if (config.speedTiers === null || typeof config.speedTiers !== 'object' || Array.isArray(config.speedTiers)) {
+    throw new TypeError('config.speedTiers must be an object');
+  }
+
   const trials = [];
   let globalIndex = 0;
 
-  for (const block of config.blocks) {
+  for (const [blockIndex, block] of config.blocks.entries()) {
+    if (!(block.speedTier in config.speedTiers)) {
+      throw new TypeError(`config.blocks[${blockIndex}].speedTier "${block.speedTier}" must reference a valid entry in config.speedTiers`);
+    }
+    if (!Array.isArray(block.trials)) {
+      throw new TypeError(`config.blocks[${blockIndex}].trials must be an array`);
+    }
+
     const speedTier = config.speedTiers[block.speedTier];
     const blockTrials = [];
 
-    for (const trialDef of block.trials) {
+    for (const [trialDefIndex, trialDef] of block.trials.entries()) {
+      if (!Number.isInteger(trialDef.count) || trialDef.count <= 0) {
+        throw new TypeError(`config.blocks[${blockIndex}].trials[${trialDefIndex}].count must be a positive integer`);
+      }
       for (let i = 0; i < trialDef.count; i++) {
         const trial = {
           blockId: block.id,

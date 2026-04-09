@@ -118,4 +118,44 @@ describe('validateConfig', () => {
     expect(result.valid).toBe(false);
     expect(result.errors.some(e => e.includes('slow') && e.includes('min') && e.includes('max'))).toBe(true);
   });
+
+  it('config with missing block.trials returns { valid: false, errors: [...] }', () => {
+    const config = makeValidConfig();
+    delete config.blocks[0].trials;
+    const result = validateConfig(config, knownPaths);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some(e => e.includes('trials') && e.includes('non-empty array'))).toBe(true);
+  });
+
+  it('config with non-array stages returns { valid: false, errors: [...] }', () => {
+    const config = makeValidConfig();
+    config.blocks[0].trials = [{ stages: 'not_an_array', count: 2 }];
+    const result = validateConfig(config, knownPaths);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some(e => e.includes('stages must be an array'))).toBe(true);
+  });
+
+  it('config with non-integer trial count returns { valid: false, errors: [...] }', () => {
+    const config = makeValidConfig();
+    config.blocks[0].trials = [{ path: 'arc_default', count: 2.5 }];
+    const result = validateConfig(config, knownPaths);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some(e => e.includes('count') && e.includes('positive integer'))).toBe(true);
+  });
+
+  it('config with non-string path returns { valid: false, errors: [...] }', () => {
+    const config = makeValidConfig();
+    config.blocks[0].trials = [{ path: 123, count: 2 }];
+    const result = validateConfig(config, knownPaths);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some(e => e.includes('path must be a string'))).toBe(true);
+  });
+
+  it('config with non-string stage.path returns { valid: false, errors: [...] }', () => {
+    const config = makeValidConfig();
+    config.blocks[0].trials = [{ stages: [{ path: 123 }], count: 2 }];
+    const result = validateConfig(config, knownPaths);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some(e => e.includes('stage.path must be a string'))).toBe(true);
+  });
 });

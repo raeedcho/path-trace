@@ -168,4 +168,15 @@ describe('createStateMachine', () => {
     const result = sm.send('NONEXISTENT_EVENT');
     expect(result).toBe('IDLE');
   });
+
+  it('send throws when transition target does not exist in config.states', () => {
+    const config = {
+      initial: 'A',
+      states: {
+        A: { on: { GO: 'NONEXISTENT' } },
+      },
+    };
+    const sm = createStateMachine(config);
+    expect(() => sm.send('GO')).toThrow(/NONEXISTENT/);
+  });
 });

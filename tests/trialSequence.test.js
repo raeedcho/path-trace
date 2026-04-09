@@ -232,4 +232,73 @@ describe('generateTrialSequence', () => {
       expect(trial.blockLabel).toBe('Warmup Round 1: Slow');
     }
   });
+
+  it('throws TypeError when config is not an object', () => {
+    expect(() => generateTrialSequence(null)).toThrow(TypeError);
+    expect(() => generateTrialSequence('string')).toThrow(TypeError);
+    expect(() => generateTrialSequence([])).toThrow(TypeError);
+  });
+
+  it('throws TypeError when config.blocks is not an array', () => {
+    expect(() => generateTrialSequence({ blocks: 'not_array', speedTiers: {} })).toThrow(TypeError);
+  });
+
+  it('throws TypeError when config.speedTiers is not an object', () => {
+    expect(() => generateTrialSequence({ blocks: [], speedTiers: null })).toThrow(TypeError);
+    expect(() => generateTrialSequence({ blocks: [], speedTiers: [] })).toThrow(TypeError);
+  });
+
+  it('throws TypeError when block.speedTier references invalid tier', () => {
+    const config = makeConfig([
+      {
+        id: 'block1',
+        label: 'Block 1',
+        speedTier: 'nonexistent',
+        trials: [{ path: 'arc_default', count: 1 }],
+        shuffle: false,
+        showFeedback: true,
+        breakAfter: false,
+      },
+    ]);
+    expect(() => generateTrialSequence(config)).toThrow(TypeError);
+  });
+
+  it('throws TypeError when block.trials is not an array', () => {
+    const config = {
+      speedTiers: { slow: { min: 800, max: 1200 } },
+      blocks: [
+        { id: 'block1', speedTier: 'slow', trials: 'not_array' },
+      ],
+    };
+    expect(() => generateTrialSequence(config)).toThrow(TypeError);
+  });
+
+  it('throws TypeError when trialDef.count is not a positive integer', () => {
+    const config = makeConfig([
+      {
+        id: 'block1',
+        label: 'Block 1',
+        speedTier: 'slow',
+        trials: [{ path: 'arc_default', count: 2.5 }],
+        shuffle: false,
+        showFeedback: true,
+        breakAfter: false,
+      },
+    ]);
+    expect(() => generateTrialSequence(config)).toThrow(TypeError);
+
+    // count of 0 should also throw
+    const config2 = makeConfig([
+      {
+        id: 'block1',
+        label: 'Block 1',
+        speedTier: 'slow',
+        trials: [{ path: 'arc_default', count: 0 }],
+        shuffle: false,
+        showFeedback: true,
+        breakAfter: false,
+      },
+    ]);
+    expect(() => generateTrialSequence(config2)).toThrow(TypeError);
+  });
 });
