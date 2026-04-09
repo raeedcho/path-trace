@@ -11,13 +11,17 @@ export class ArcPath {
    * @param {number} config.radius
    * @param {number} [config.startAngle=Math.PI] — start angle in radians
    * @param {number} [config.endAngle=2*Math.PI] — end angle in radians
+   * @param {number} [config.targetWidth=0] — target zone width for hit detection
+   * @param {number} [config.targetHeight=0] — target zone height for hit detection
    */
-  constructor({ centerX, centerY, radius, startAngle = Math.PI, endAngle = 2 * Math.PI }) {
+  constructor({ centerX, centerY, radius, startAngle = Math.PI, endAngle = 2 * Math.PI, targetWidth = 0, targetHeight = 0 }) {
     this.cx = centerX;
     this.cy = centerY;
     this.radius = radius;
     this.startAngle = startAngle;
     this.endAngle = endAngle;
+    this.targetWidth = targetWidth;
+    this.targetHeight = targetHeight;
   }
 
   /**
@@ -106,9 +110,13 @@ export class ArcPath {
    */
   getTargetPosition() {
     const endPt = this.getPointAtProgress(1);
-    // Tangent angle at the endpoint (perpendicular to the radius)
-    const tangentAngle = this.endAngle + Math.PI / 2;
-    return { x: endPt.x, y: endPt.y, width: 0, height: 0, angle: tangentAngle };
+    return {
+      x: endPt.x,
+      y: endPt.y,
+      width: this.targetWidth,
+      height: this.targetHeight,
+      angle: this.endAngle,
+    };
   }
 
   /**
@@ -132,7 +140,8 @@ export class ArcPath {
     ctx.save();
 
     // Draw dashed arc
-    ctx.setLineDash([5, 5]);
+    ctx.setLineDash([3, 6]);
+    ctx.lineWidth = 3;
     ctx.strokeStyle = colors.path || '#000';
     ctx.beginPath();
     ctx.arc(this.cx, this.cy, this.radius, this.startAngle, this.endAngle);
@@ -145,6 +154,9 @@ export class ArcPath {
     ctx.beginPath();
     ctx.arc(startPt.x, startPt.y, startRadius, 0, 2 * Math.PI);
     ctx.fill();
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 1;
+    ctx.stroke();
 
     // Target rings at progress=1
     const target = this.getTargetPosition();
@@ -153,15 +165,11 @@ export class ArcPath {
     ctx.save();
     ctx.translate(target.x, target.y);
     ctx.rotate(target.angle);
-    for (let i = targetRings.length - 1; i >= 0; i--) {
-      const scale = (i + 1) / targetRings.length;
+    const numRings = targetRings.length;
+    const sliceHeight = ringHeight / numRings;
+    for (let i = 0; i < numRings; i++) {
       ctx.fillStyle = targetRings[i];
-      ctx.fillRect(
-        -ringWidth / 2,
-        (-ringHeight / 2) * scale,
-        ringWidth,
-        ringHeight * scale,
-      );
+      ctx.fillRect(-ringWidth / 2, -ringHeight / 2 + sliceHeight * i, ringWidth, sliceHeight);
     }
     ctx.restore();
 

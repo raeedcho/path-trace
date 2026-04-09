@@ -10,12 +10,16 @@ export class LinePath {
    * @param {number} config.startY
    * @param {number} config.endX
    * @param {number} config.endY
+   * @param {number} [config.targetWidth=0] — target zone width for hit detection
+   * @param {number} [config.targetHeight=0] — target zone height for hit detection
    */
-  constructor({ startX, startY, endX, endY }) {
+  constructor({ startX, startY, endX, endY, targetWidth = 0, targetHeight = 0 }) {
     this.startX = startX;
     this.startY = startY;
     this.endX = endX;
     this.endY = endY;
+    this.targetWidth = targetWidth;
+    this.targetHeight = targetHeight;
   }
 
   /**
@@ -59,7 +63,7 @@ export class LinePath {
    */
   getTargetPosition() {
     const angle = Math.atan2(this.endY - this.startY, this.endX - this.startX);
-    return { x: this.endX, y: this.endY, width: 0, height: 0, angle };
+    return { x: this.endX, y: this.endY, width: this.targetWidth, height: this.targetHeight, angle };
   }
 
   /**
@@ -82,7 +86,8 @@ export class LinePath {
 
     // Draw dashed line
     ctx.save();
-    ctx.setLineDash([5, 5]);
+    ctx.setLineDash([3, 6]);
+    ctx.lineWidth = 3;
     ctx.strokeStyle = colors.path || '#000';
     ctx.beginPath();
     ctx.moveTo(this.startX, this.startY);
@@ -95,6 +100,9 @@ export class LinePath {
     ctx.beginPath();
     ctx.arc(this.startX, this.startY, startRadius, 0, 2 * Math.PI);
     ctx.fill();
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 1;
+    ctx.stroke();
 
     // Target rings at endpoint
     const target = this.getTargetPosition();
@@ -103,15 +111,11 @@ export class LinePath {
     ctx.save();
     ctx.translate(target.x, target.y);
     ctx.rotate(target.angle);
-    for (let i = targetRings.length - 1; i >= 0; i--) {
-      const scale = (i + 1) / targetRings.length;
+    const numRings = targetRings.length;
+    const sliceHeight = ringHeight / numRings;
+    for (let i = 0; i < numRings; i++) {
       ctx.fillStyle = targetRings[i];
-      ctx.fillRect(
-        -ringWidth / 2,
-        (-ringHeight / 2) * scale,
-        ringWidth,
-        ringHeight * scale,
-      );
+      ctx.fillRect(-ringWidth / 2, -ringHeight / 2 + sliceHeight * i, ringWidth, sliceHeight);
     }
     ctx.restore();
 

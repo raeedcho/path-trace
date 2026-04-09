@@ -11,13 +11,17 @@ export class VShapePath {
    * @param {number} config.halfWidth
    * @param {number} config.peakHeight
    * @param {number} [config.angle=0] — rotation angle in radians
+   * @param {number} [config.targetWidth=0] — target zone width for hit detection
+   * @param {number} [config.targetHeight=0] — target zone height for hit detection
    */
-  constructor({ centerX, centerY, halfWidth, peakHeight, angle = 0 }) {
+  constructor({ centerX, centerY, halfWidth, peakHeight, angle = 0, targetWidth = 0, targetHeight = 0 }) {
     this.centerX = centerX;
     this.centerY = centerY;
     this.halfWidth = halfWidth;
     this.peakHeight = peakHeight;
     this.angle = angle;
+    this.targetWidth = targetWidth;
+    this.targetHeight = targetHeight;
 
     // Compute three unrotated points relative to center:
     // start (top-left), peak (bottom-center), end (top-right)
@@ -143,7 +147,7 @@ export class VShapePath {
       this.end.y - this.peak.y,
       this.end.x - this.peak.x,
     );
-    return { x: this.end.x, y: this.end.y, width: 0, height: 0, angle };
+    return { x: this.end.x, y: this.end.y, width: this.targetWidth, height: this.targetHeight, angle };
   }
 
   /**
@@ -167,7 +171,8 @@ export class VShapePath {
     ctx.save();
 
     // Draw dashed V-shape (two segments)
-    ctx.setLineDash([5, 5]);
+    ctx.setLineDash([3, 6]);
+    ctx.lineWidth = 3;
     ctx.strokeStyle = colors.path || '#000';
     ctx.beginPath();
     ctx.moveTo(this.start.x, this.start.y);
@@ -181,6 +186,9 @@ export class VShapePath {
     ctx.beginPath();
     ctx.arc(this.start.x, this.start.y, startRadius, 0, 2 * Math.PI);
     ctx.fill();
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 1;
+    ctx.stroke();
 
     // Target rings at endpoint
     const target = this.getTargetPosition();
@@ -189,15 +197,11 @@ export class VShapePath {
     ctx.save();
     ctx.translate(target.x, target.y);
     ctx.rotate(target.angle);
-    for (let i = targetRings.length - 1; i >= 0; i--) {
-      const scale = (i + 1) / targetRings.length;
+    const numRings = targetRings.length;
+    const sliceHeight = ringHeight / numRings;
+    for (let i = 0; i < numRings; i++) {
       ctx.fillStyle = targetRings[i];
-      ctx.fillRect(
-        -ringWidth / 2,
-        (-ringHeight / 2) * scale,
-        ringWidth,
-        ringHeight * scale,
-      );
+      ctx.fillRect(-ringWidth / 2, -ringHeight / 2 + sliceHeight * i, ringWidth, sliceHeight);
     }
     ctx.restore();
 

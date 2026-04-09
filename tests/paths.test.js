@@ -113,6 +113,21 @@ describe('ArcPath', () => {
     expect(target.y).toBeCloseTo(endPt.y, 5);
   });
 
+  it('getTargetPosition returns endAngle as the rotation angle', () => {
+    const target = arc.getTargetPosition();
+    expect(target.angle).toBeCloseTo(2 * Math.PI, 5);
+  });
+
+  it('getTargetPosition returns stored target dimensions', () => {
+    const arcWithDims = new ArcPath({
+      centerX: 200, centerY: 200, radius: 100,
+      targetWidth: 22, targetHeight: 200,
+    });
+    const target = arcWithDims.getTargetPosition();
+    expect(target.width).toBe(22);
+    expect(target.height).toBe(200);
+  });
+
   it('implements all six interface methods', () => {
     expect(typeof arc.draw).toBe('function');
     expect(typeof arc.getPointAtProgress).toBe('function');
@@ -176,6 +191,16 @@ describe('VShapePath', () => {
     const target = vshape.getTargetPosition();
     expect(target.x).toBeCloseTo(vshape.end.x, 5);
     expect(target.y).toBeCloseTo(vshape.end.y, 5);
+  });
+
+  it('getTargetPosition returns stored target dimensions', () => {
+    const vWithDims = new VShapePath({
+      centerX: 200, centerY: 200, halfWidth: 100, peakHeight: 100,
+      targetWidth: 22, targetHeight: 200,
+    });
+    const target = vWithDims.getTargetPosition();
+    expect(target.width).toBe(22);
+    expect(target.height).toBe(200);
   });
 
   it('implements all six interface methods', () => {
@@ -245,6 +270,16 @@ describe('LinePath', () => {
     const target = line.getTargetPosition();
     expect(target.x).toBeCloseTo(300, 5);
     expect(target.y).toBeCloseTo(200, 5);
+  });
+
+  it('getTargetPosition returns stored target dimensions', () => {
+    const lineWithDims = new LinePath({
+      startX: 0, startY: 0, endX: 100, endY: 0,
+      targetWidth: 22, targetHeight: 200,
+    });
+    const target = lineWithDims.getTargetPosition();
+    expect(target.width).toBe(22);
+    expect(target.height).toBe(200);
   });
 
   it('implements all six interface methods', () => {
