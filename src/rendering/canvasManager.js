@@ -117,7 +117,6 @@ export function createCursorManager(options = {}) {
   let canvasHeight = 0;
   let locked = false;
   let targetCanvas = null;
-  let animationFrame = null;
   const listeners = [];
 
   /** @type {((e: MouseEvent) => void) | null} */
@@ -233,28 +232,24 @@ export function createCursorManager(options = {}) {
 
   /**
    * Draw the custom cursor on the mouse layer context.
+   * Synchronous — intended to be called once per render frame by the game loop.
    * @param {CanvasRenderingContext2D} mouseCtx
    */
   function drawCursor(mouseCtx) {
     const canvas = mouseCtx.canvas;
 
-    if (animationFrame) return;
+    mouseCtx.save();
+    mouseCtx.setTransform(1, 0, 0, 1, 0, 0);
+    mouseCtx.clearRect(0, 0, canvas.width, canvas.height);
+    mouseCtx.restore();
 
-    animationFrame = requestAnimationFrame(() => {
-      animationFrame = null;
-      mouseCtx.save();
-      mouseCtx.setTransform(1, 0, 0, 1, 0, 0);
-      mouseCtx.clearRect(0, 0, canvas.width, canvas.height);
-      mouseCtx.restore();
-
-      mouseCtx.fillStyle = 'white';
-      mouseCtx.strokeStyle = 'black';
-      mouseCtx.lineWidth = 2;
-      mouseCtx.beginPath();
-      mouseCtx.arc(x, y, cursorRadius, 0, 2 * Math.PI, true);
-      mouseCtx.fill();
-      mouseCtx.stroke();
-    });
+    mouseCtx.fillStyle = 'white';
+    mouseCtx.strokeStyle = 'black';
+    mouseCtx.lineWidth = 2;
+    mouseCtx.beginPath();
+    mouseCtx.arc(x, y, cursorRadius, 0, 2 * Math.PI, true);
+    mouseCtx.fill();
+    mouseCtx.stroke();
   }
 
   /**
