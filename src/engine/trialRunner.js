@@ -169,6 +169,16 @@ export function createTrialRunner({ canvasManager, audioManager, overlayManager,
     // --- HOLD + COUNTDOWN (looped until countdown completes without abort) ---
     const tones = config.countdown.tones;
     const mainCtx = canvasManager.getContext('main');
+    const mouseCtx = canvasManager.getContext('mouse');
+
+    // Lightweight cursor-rendering loop for hold/countdown phases.
+    // The main game loop only runs during tracing, but pointer lock hides the
+    // system cursor immediately, so participants would see nothing without this.
+    const cursorLoop = createGameLoop(
+      () => {}, // no update logic — cursor position is handled by onCursorMove
+      () => { cursorManager.drawCursor(mouseCtx); },
+    );
+    cursorLoop.start();
 
     let countdownCompleted = false;
     while (!countdownCompleted) {
@@ -271,6 +281,9 @@ export function createTrialRunner({ canvasManager, audioManager, overlayManager,
     // Max tracing duration before a TIMEOUT is sent (prevents indefinite hang)
     const maxTracingTime = maxTime * (config.tracing?.maxDurationMultiplier ?? 3);
 
+    // Hand off cursor rendering to the main game loop
+    cursorLoop.stop();
+
     await new Promise((resolve) => {
       // Declared before createGameLoop so the closure can reference it via clearTimeout
       let tracingTimeoutId = null;
@@ -325,7 +338,6 @@ export function createTrialRunner({ canvasManager, audioManager, overlayManager,
         },
         () => {
           // Render: draw cursor on mouse layer
-          const mouseCtx = canvasManager.getContext('mouse');
           cursorManager.drawCursor(mouseCtx);
         },
       );
