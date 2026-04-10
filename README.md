@@ -17,18 +17,21 @@ npm run dev
 npm test
 ```
 
-Open `http://localhost:3000` in Chrome. The experiment flow is: demographics form → instructions → path tracing trials → completion screen with data download.
+Open `http://localhost:3000` in **Chrome** (recommended). The experiment flow is: demographics form → instructions → path tracing trials → completion screen with data download.
 
 ## Requirements
 
-Node.js 20+ and npm. Chrome or Chromium-based browser recommended (Pointer Lock API with `unadjustedMovement` is Chromium-only).
+Node.js 20+ and npm. **Chrome or Chromium-based browser strongly recommended** — Pointer Lock API with `unadjustedMovement` is Chromium-only, and Safari has significant Web Audio latency issues that may affect countdown tone synchronization.
 
 ## Commands
 
 | Command | Description |
 |---------|-------------|
-| `npm run dev` | Start Vite dev server on port 3000 (local data mode) |
-| `npm run build` | Production build to `dist/` (Firebase data mode) |
+| `npm run dev` | Start dev server with `default` config (3-trial quick test) |
+| `npm run dev:arc-tracing` | Start dev server with arc tracing study config |
+| `npm run build` | Production build of `default` config to `dist/default/` |
+| `npm run build:arc-tracing` | Production build of arc tracing study to `dist/arc-tracing-study/` |
+| `npm run build:all` | Build all experiment configs |
 | `npm run preview` | Preview the production build locally |
 | `npm test` | Run Vitest in watch mode |
 | `npm run test:run` | Run Vitest once (used by CI) |
@@ -38,12 +41,14 @@ Node.js 20+ and npm. Chrome or Chromium-based browser recommended (Pointer Lock 
 ```
 src/
 ├── main.js                    # Entry point: intake → instructions → experiment → completion
-├── config/
-│   ├── experimentConfig.js    # ★ Primary file researchers edit — blocks, timing, paths
+├── configs/                   # ★ Experiment configurations (one file per experiment)
+│   ├── default.js             # Minimal 3-trial config for development/testing
+│   └── arc-tracing-study.js   # Full arc tracing study protocol
+├── config/                    # Shared infrastructure (not experiment-specific)
 │   ├── pathDefinitions.js     # Maps path names to constructor parameters
 │   ├── trialSequence.js       # Generates flat trial list from config
 │   ├── constants.js           # Colors, sizes, thresholds
-│   └── validation.js          # Config validation at startup (moved to utils/)
+│   └── validation.js          # Config validation at startup
 ├── paths/
 │   ├── pathRegistry.js        # Strategy pattern: name → path class
 │   ├── ArcPath.js             # Semicircular arc
@@ -62,17 +67,65 @@ src/
 │   ├── FirebaseDataManager.js # Writes to Firebase Realtime Database
 │   └── createDataManager.js   # Factory: picks backend based on env var
 ├── audio/
-│   └── audioManager.js        # Web Audio API tones + preloaded sound playback
-└── ui/
-    ├── overlayManager.js      # Instruction/feedback/break screen overlays
-    └── progressDisplay.js     # HUD: timer, round counter, goal time
+│   └── audioManager.js        # Preloaded audio buffer playback
+├── ui/
+│   ├── overlayManager.js      # Instruction/feedback/break screen overlays
+│   └── progressDisplay.js     # HUD: timer, round counter, goal time
+└── utils/
+    ├── math.js                # distance(), clamp(), lerp(), lineToPoint()
+    ├── timing.js              # wait(), high-res timer helpers
+    └── validation.js          # Config schema checks
+
+public/
+└── sounds/                    # Countdown and feedback audio files (mp3)
+    ├── ready_sound.mp3        # Countdown tone (ready, set)
+    ├── go_sound.mp3           # Countdown tone (go)
+    └── lowbeep.mp3            # Mean-time beep during tracing
+
+tests/
+├── setup.js                   # localStorage polyfill for Node 22+ compatibility
+└── *.test.js                  # Test files per module
 ```
+
+## Multi-experiment config system
+
+Experiments are selected at build time via Vite's `--mode` flag. Each experiment has its own config file in `src/configs/`:
+
+```
+src/configs/
+├── default.js              # 3-trial quick test (used by plain `npm run dev`)
+└── arc-tracing-study.js    # Full study protocol
+```
+
+The `vite.config.js` uses `resolve.alias` to map `@experiment-config` to the correct file based on `--mode`. All engine code imports from the alias and never knows which specific config it received.
+
+To add a new experiment: create `src/configs/my-new-study.js`, add a script to `package.json` (`"dev:my-new-study": "vite --mode my-new-study"`), and run it. See `docs/creating-tasks.md` for details.
+
+### Build metadata
+
+Every data file includes build metadata for reproducibility:
+
+```json
+{
+  "buildMetadata": {
+    "gitTag": "v1.0.0-3-g4a2b1c0",
+    "buildTime": "2026-04-10T14:30:00.000Z",
+    "experimentMode": "arc-tracing-study",
+    "userAgent": "...",
+    "screenWidth": 1920,
+    "screenHeight": 1080,
+    "devicePixelRatio": 2
+  }
+}
+```
+
+Tag each data-collection run in git: `git tag -a arc-speed-v1-batch1 -m "Arc speed study, n=50, 2026-04-15"`.
 
 ## How it works
 
 ### Data flow
 
-1. `experimentConfig.js` defines the experiment: speed tiers, blocks, trial counts, path types.
+1. A config file in `src/configs/` defines the experiment: speed tiers, blocks, trial counts, path types.
 2. `trialSequence.js` flattens the config into an ordered array of trial objects.
 3. `experimentRunner.js` iterates that array, calling `trialRunner.js` for each trial.
 4. `trialRunner.js` manages one trial's lifecycle through the state machine: hold in start circle → countdown tones → trace the path → feedback.
@@ -89,7 +142,15 @@ IDLE → HOLD → COUNTDOWN → TRACING → FEEDBACK → STAGE_CHECK → TRIAL_E
                                                 RETURN_TO_START → HOLD  (multi-stage trials)
 ```
 
-The state machine is defined declaratively in `experimentConfig.js` under `trialFlow`. Adding new states or transitions means editing that config object.
+The state machine is defined declaratively in the experiment config under `trialFlow`. Adding new states or transitions means editing that config object.
+
+### Pause/resume
+
+When pointer lock is lost (Esc key, focus change), the cursor manager enters a paused state. The engine checks `isPaused()` in synchronous loops (game loop, hold checks) and `await waitForResume()` after async waits (countdown tone intervals). Trials freeze in place and resume exactly where they left off when pointer lock is re-acquired.
+
+### Audio
+
+Countdown tones and feedback sounds use **preloaded audio buffers** (`audioManager.preloadSound` / `audioManager.playSound`), not Web Audio oscillators. Oscillator synthesis has inconsistent latency across browsers (especially Safari). The mp3 files in `public/sounds/` are decoded during initialization and played from memory with minimal latency.
 
 ### Multi-stage trials
 
@@ -125,15 +186,18 @@ In local mode, trial summaries (without raw point arrays) are also backed up to 
 1. Create a Firebase project at [console.firebase.google.com](https://console.firebase.google.com).
 2. Enable Anonymous Authentication in the Firebase console.
 3. Set up a Realtime Database and set rules to allow authenticated writes.
-4. Fill in the `firebase` section of `src/config/experimentConfig.js` with your project's credentials.
-5. Build and deploy:
-
-```bash
-npm run build
-npx firebase-tools deploy --only hosting
-```
-
-6. On Prolific/MTurk, point participants to your Firebase Hosting URL. Parse `PROLIFIC_PID` from URL parameters in `main.js` if needed for participant identification.
+4. Fill in the `firebase` section of your experiment config file with your project's credentials.
+5. Create a Firebase Hosting site and deploy target:
+   ```bash
+   firebase hosting:sites:create my-experiment-site
+   firebase target:apply hosting my-experiment my-experiment-site
+   ```
+6. Build and deploy:
+   ```bash
+   npm run build:arc-tracing
+   firebase deploy --only hosting:my-experiment
+   ```
+7. On Prolific/MTurk, point participants to your Firebase Hosting URL.
 
 ## Data format
 
@@ -147,7 +211,12 @@ The downloaded JSON (local mode) or Firebase document (production) has this stru
     "gender": "female",
     "handedness": "right",
     "handednessMeasure": 100,
-    "device": "mouse"
+    "device": "mouse",
+    "buildMetadata": {
+      "gitTag": "v1.0.0",
+      "buildTime": "2026-04-10T14:30:00.000Z",
+      "experimentMode": "arc-tracing-study"
+    }
   },
   "trials": [
     {
@@ -157,8 +226,7 @@ The downloaded JSON (local mode) or Firebase document (production) has this stru
       "speedTier": { "min": 800, "max": 1200 },
       "points": [
         { "x": -166, "y": 0, "t": 0 },
-        { "x": -160, "y": 12, "t": 16 },
-        ...
+        { "x": -160, "y": 12, "t": 16 }
       ],
       "time": 0.952,
       "movementAccuracy": 87.34,
@@ -188,7 +256,7 @@ npm test              # Watch mode — re-runs on file changes
 npm run test:run      # Single run (CI mode)
 ```
 
-Tests are organized by module in the `tests/` directory. Path geometry tests verify math with exact values. Engine tests use mocks to exercise orchestration without needing a browser. UI tests use jsdom for DOM assertions.
+Tests are organized by module in the `tests/` directory. A `tests/setup.js` file polyfills `localStorage` for Node 22+ compatibility (Node 22 introduced a built-in `localStorage` that conflicts with jsdom's implementation).
 
 ## Legacy reference
 

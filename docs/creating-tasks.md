@@ -1,10 +1,40 @@
 # Creating new tracing tasks
 
-This guide walks through everything a researcher needs to modify the experiment without touching engine code. The three things you'll typically change are the experiment config (timing, blocks, trial counts), path definitions (which shapes participants trace), and occasionally a new path type (a new geometry).
+This guide walks through everything a researcher needs to modify the experiment without touching engine code. The four things you'll typically change are the experiment config (timing, blocks, trial counts), path definitions (which shapes participants trace), occasionally a new path type (a new geometry), and deployment setup (a new Firebase site for a new study).
+
+## Creating a new experiment
+
+Every experiment is a single config file in `src/configs/`. To create a new one:
+
+1. Copy an existing config as your starting point:
+   ```bash
+   cp src/configs/arc-tracing-study.js src/configs/my-new-study.js
+   ```
+
+2. Add npm scripts to `package.json`:
+   ```json
+   "dev:my-new-study": "vite --mode my-new-study",
+   "build:my-new-study": "vite build --mode my-new-study"
+   ```
+
+3. Edit `src/configs/my-new-study.js` to define your experiment (see sections below).
+
+4. Test locally:
+   ```bash
+   npm run dev:my-new-study
+   ```
+
+5. When ready for data collection, tag the commit:
+   ```bash
+   git tag -a my-new-study-v1-batch1 -m "My new study, n=50, 2026-05-01"
+   git push origin my-new-study-v1-batch1
+   ```
+
+The build system uses Vite's `--mode` flag to select which config file is bundled. All engine code imports from the `@experiment-config` alias and never knows which specific config it received. Each build outputs to `dist/<mode>/`, so different experiments don't overwrite each other.
 
 ## Changing timing and trial structure
 
-Everything about what trials are run, in what order, at what speed, and with what feedback is defined in one file: `src/config/experimentConfig.js`. Here's a walkthrough of each section.
+Everything about what trials are run, in what order, at what speed, and with what feedback is defined in your experiment config file. Here's a walkthrough of each section.
 
 ### Speed tiers
 
@@ -17,7 +47,7 @@ speedTiers: {
 },
 ```
 
-Each tier defines a time window in milliseconds. The participant sees these as "Your Goal Time: 800 - 1200 ms" in the HUD. The pace dot moves at the mean of min and max. Countdown tone spacing also scales with the mean time. You can add as many tiers as you want — just give each a unique key and reference it in your blocks.
+Each tier defines a time window in milliseconds. The participant sees these as "Your Goal Time: 800 - 1200 ms" in the HUD. The pace dot moves at the mean of min and max. Countdown tone spacing also scales with the mean time (when `toneInterval` is `null`). You can add as many tiers as you want — just give each a unique key and reference it in your blocks.
 
 ### Blocks
 
@@ -107,6 +137,8 @@ countdown: {
 
 Setting `toneInterval: null` makes the countdown spacing match the trial's mean time — fast trials get a fast countdown, slow trials get a slow countdown. Set it to a fixed number (e.g., `500`) for uniform countdowns regardless of speed tier.
 
+The `sound` field references preloaded audio buffers. Available by default: `'ready'`, `'go'`, `'mean'`. To add new sounds, place mp3 files in `public/sounds/` and add a `preloadSound` call in `main.js` (see the Audio section below).
+
 ## Adding new path shapes
 
 ### Option A: Change parameters of existing paths
@@ -138,7 +170,7 @@ export const pathDefinitions = {
 };
 ```
 
-Then reference the new names in your block definitions:
+Then reference the new names in your experiment config's block definitions:
 
 ```js
 trials: [{ path: 'arc_quarter', count: 10 }],
@@ -362,13 +394,77 @@ describe('SinePath', () => {
 });
 ```
 
-#### Step 4: Use it in the config
+#### Step 4: Use it in your experiment config
 
 ```js
 trials: [{ path: 'sine_default', count: 10 }],
 ```
 
 That's it — no engine code changes needed.
+
+## Audio
+
+Countdown tones and feedback sounds use preloaded mp3 files, not Web Audio oscillators (oscillator synthesis has inconsistent latency across browsers, especially Safari).
+
+Sound files live in `public/sounds/`. They are preloaded in `main.js` during initialization:
+
+```js
+await audioManager.preloadSound('ready', '/sounds/ready_sound.mp3');
+await audioManager.preloadSound('go', '/sounds/go_sound.mp3');
+await audioManager.preloadSound('mean', '/sounds/lowbeep.mp3');
+```
+
+The experiment config references sounds by name in the `countdown.tones` array:
+
+```js
+tones: [
+  { color: 'countdown.ready', sound: 'ready' },  // plays the 'ready' buffer
+  { color: 'countdown.set',   sound: 'ready' },
+  { color: 'countdown.go',    sound: 'go'    },
+],
+```
+
+To add a new sound: place the mp3 in `public/sounds/`, add a `preloadSound` call in `main.js`, and reference the name in your config.
+
+## Deploying a new experiment
+
+Each experiment gets its own Firebase Hosting site with a unique URL:
+
+1. Build the experiment:
+   ```bash
+   npm run build:my-new-study
+   ```
+
+2. Create a Firebase Hosting site (first time only):
+   ```bash
+   firebase hosting:sites:create path-trace-my-new-study
+   firebase target:apply hosting my-new-study path-trace-my-new-study
+   ```
+
+3. Add a hosting entry to `firebase.json`:
+   ```json
+   {
+     "target": "my-new-study",
+     "public": "dist/my-new-study",
+     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+     "rewrites": [{ "source": "**", "destination": "/index.html" }]
+   }
+   ```
+
+4. Fill in Firebase credentials in your config file's `firebase` section.
+
+5. Deploy:
+   ```bash
+   firebase deploy --only hosting:my-new-study
+   ```
+
+6. Tag the commit for reproducibility:
+   ```bash
+   git tag -a my-new-study-v1-batch1 -m "My new study, n=50, 2026-05-01"
+   git push origin my-new-study-v1-batch1
+   ```
+
+The tag plus the build metadata embedded in every data file (git tag, build time, experiment mode) means you can always trace any dataset back to the exact code and config that produced it.
 
 ## Tips for the `getDistanceFromPath` and `getProgressAtPoint` methods
 
@@ -381,9 +477,9 @@ If your path has a natural parameterization (like arc angle or line projection),
 After modifying the config or adding a path:
 
 1. Run `npm test` to verify path math and config validation pass.
-2. Run `npm run dev` and trace a few trials manually to check the visual feel.
+2. Run `npm run dev` (or `npm run dev:my-study`) and trace a few trials manually in **Chrome** to check the visual feel. Safari has audio latency issues — best to use Chrome for testing.
 3. Check the downloaded JSON to verify the data structure looks correct.
-4. For production deployment, run `npm run build` and test the production bundle with `npm run preview`.
+4. For production deployment, run `npm run build:my-study` and test the production bundle with `npm run preview`.
 
 ## Common mistakes
 
@@ -394,3 +490,7 @@ After modifying the config or adding a path:
 **Target is at the wrong angle.** The `angle` returned by `getTargetPosition()` determines the target rectangle's rotation. For paths that end moving rightward, `angle ≈ 0` gives a vertical target bar. For paths ending downward, `angle ≈ π/2`. Calculate the tangent direction at the endpoint.
 
 **Accuracy is always 0 or 100.** Check that `getDistanceFromPath` returns values in a reasonable pixel range (0 for on-path, 50-100+ for far away). The engine maps distance 0 → 100% accuracy, distance ≥ `maxAccuracyDistance` (default 100px) → 0% accuracy.
+
+**No sounds playing.** Verify the mp3 files exist in `public/sounds/` and that `audioManager.preloadSound()` is called for each one in `main.js` after `audioManager.initialize()`. Check the browser console for "Failed to fetch sound" warnings.
+
+**Audio-visual delay.** Test in Chrome, not Safari. Safari has significantly higher Web Audio latency. If delay persists in Chrome, check that `AudioContext` is in the `'running'` state (see console logs).
