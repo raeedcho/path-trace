@@ -359,6 +359,7 @@ export function createTrialRunner({ canvasManager, audioManager, overlayManager,
 
       // Timeout guard: if participant never reaches the target, end tracing after maxTracingTime
       tracingTimeoutId = setTimeout(() => {
+        if (cursorManager.isPaused()) return; // don't timeout during pause
         elapsedAtEnd = timer.elapsed();
         if (!soundPlayed) {
           audioManager.playSound('mean');
