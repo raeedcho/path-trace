@@ -173,6 +173,9 @@ async function main() {
 
   // 4. Initialize audio (requires user gesture which intake form provided)
   audioManager.initialize();
+  await audioManager.preloadSound('ready', '/sounds/ready_sound.mp3');
+  await audioManager.preloadSound('go', '/sounds/go_sound.mp3');
+  await audioManager.preloadSound('mean', '/sounds/lowbeep.mp3');
 
   // 5. Show instructions
   await showInstructions(overlayManager);

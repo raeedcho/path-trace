@@ -247,7 +247,7 @@ export function createTrialRunner({ canvasManager, audioManager, overlayManager,
         mainCtx.lineWidth = 1;
         mainCtx.stroke();
 
-        audioManager.playDefaultTone(tone.sound);
+        audioManager.playSound(tone.sound);
 
         // Wait between tones (except after the final "go" tone)
         if (i < tones.length - 1) {
@@ -328,7 +328,7 @@ export function createTrialRunner({ canvasManager, audioManager, overlayManager,
 
           // Play mean time beep
           if (!soundPlayed && elapsed >= meanTime) {
-            audioManager.playDefaultTone('mean');
+            audioManager.playSound('mean');
             soundPlayed = true;
           }
 
@@ -338,7 +338,7 @@ export function createTrialRunner({ canvasManager, audioManager, overlayManager,
             elapsedAtEnd = elapsed;
             // Ensure mean beep plays even on an early hit
             if (!soundPlayed) {
-              audioManager.playDefaultTone('mean');
+              audioManager.playSound('mean');
               soundPlayed = true;
             }
             clearTimeout(tracingTimeoutId);
@@ -361,7 +361,7 @@ export function createTrialRunner({ canvasManager, audioManager, overlayManager,
       tracingTimeoutId = setTimeout(() => {
         elapsedAtEnd = timer.elapsed();
         if (!soundPlayed) {
-          audioManager.playDefaultTone('mean');
+          audioManager.playSound('mean');
           soundPlayed = true;
         }
         loop.stop();

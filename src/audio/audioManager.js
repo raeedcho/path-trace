@@ -122,8 +122,11 @@ export function createAudioManager() {
     }
 
     const source = audioCtx.createBufferSource();
+    const gain = audioCtx.createGain();
+    gain.gain.value = 0.15;
     source.buffer = buffer;
-    source.connect(audioCtx.destination);
+    source.connect(gain);
+    gain.connect(audioCtx.destination);
     source.start(0);
   }
 
