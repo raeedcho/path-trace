@@ -194,16 +194,17 @@ async function main() {
     // Handle pointer lock loss
     cursorManager.setOnLockLost(() => {
       if (experimentInProgress) {
+        const overlay = document.getElementById('pointer-lock-overlay');
         overlayManager.show('pointer-lock-overlay');
-        mouseCanvas.addEventListener('click', async () => {
+        overlay.addEventListener('click', async () => {
           try {
             await cursorManager.requestPointerLock(mouseCanvas, {
               unadjustedMovement: config.pointer.useUnadjustedMovement,
             });
+            cursorManager.resume();
             overlayManager.hide('pointer-lock-overlay');
           } catch (err) {
             console.error('Failed to restore pointer lock:', err);
-            // Keep overlay visible so participant can retry by clicking again
           }
         }, { once: true });
       }

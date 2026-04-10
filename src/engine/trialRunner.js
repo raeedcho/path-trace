@@ -189,11 +189,24 @@ export function createTrialRunner({ canvasManager, audioManager, overlayManager,
         let holdTimer = null;
 
         const checkHold = () => {
+          if (cursorManager.isPaused()) {
+            // Clear any running hold timer — we'll restart after resume
+            if (holdTimer !== null) {
+              clearTimeout(holdTimer);
+              holdTimer = null;
+            }
+            return;
+          }
           const pos = cursorManager.getCursorPosition();
           const dist = distance(pos.x, pos.y, startPos.x, startPos.y);
           if (dist <= DEFAULTS.startCircleRadius) {
             if (holdTimer === null) {
               holdTimer = setTimeout(() => {
+                // Check pause one more time before resolving
+                if (cursorManager.isPaused()) {
+                  holdTimer = null; // will restart on next checkHold after resume
+                  return;
+                }
                 unsubscribe();
                 resolve();
               }, holdDuration);
@@ -239,6 +252,7 @@ export function createTrialRunner({ canvasManager, audioManager, overlayManager,
         // Wait between tones (except after the final "go" tone)
         if (i < tones.length - 1) {
           await wait(toneInterval);
+          await cursorManager.waitForResume(); // pause-aware wait
 
           const pos = cursorManager.getCursorPosition();
           const dist = distance(pos.x, pos.y, startPos.x, startPos.y);
@@ -290,6 +304,7 @@ export function createTrialRunner({ canvasManager, audioManager, overlayManager,
 
       const loop = createGameLoop(
         (deltaTime) => {
+          if (cursorManager.isPaused()) return;
           const elapsed = timer.elapsed();
           const pos = cursorManager.getCursorPosition();
 
