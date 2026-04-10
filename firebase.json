@@ -1,0 +1,16 @@
+{
+  "hosting": [
+    {
+      "target": "default",
+      "public": "dist/default",
+      "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+      "rewrites": [{ "source": "**", "destination": "/index.html" }]
+    },
+    {
+      "target": "arc-tracing-study",
+      "public": "dist/arc-tracing-study",
+      "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+      "rewrites": [{ "source": "**", "destination": "/index.html" }]
+    }
+  ]
+}

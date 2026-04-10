@@ -4,8 +4,9 @@ import { execSync } from 'child_process';
 
 export default defineConfig(({ mode }) => {
   // Resolve the config file: mode maps to src/configs/<mode>.js
-  // Tests use 'test' mode which Vitest sets automatically — fall back to 'default'
-  const configMode = mode === 'test' ? 'default' : (mode || 'default');
+  // Vite's built-in modes ('development', 'production') and Vitest's 'test' all map to 'default'
+  const VITE_BUILTIN_MODES = new Set(['development', 'production', 'test']);
+  const configMode = VITE_BUILTIN_MODES.has(mode) ? 'default' : (mode || 'default');
   const configFile = path.resolve(__dirname, `src/configs/${configMode}.js`);
 
   // Build metadata for reproducibility

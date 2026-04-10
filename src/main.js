@@ -170,9 +170,14 @@ async function main() {
   // 3. Run intake form
   const participantInfo = await collectParticipantInfo(overlayManager);
   participantInfo.buildMetadata = {
-    gitTag: typeof __GIT_TAG__ !== 'undefined' ? __GIT_TAG__ : 'unknown',
-    buildTime: typeof __BUILD_TIME__ !== 'undefined' ? __BUILD_TIME__ : 'unknown',
-    experimentMode: typeof __EXPERIMENT_MODE__ !== 'undefined' ? __EXPERIMENT_MODE__ : 'unknown',
+    gitTag: __GIT_TAG__,
+    buildTime: __BUILD_TIME__,
+    experimentMode: __EXPERIMENT_MODE__,
+    userAgent: navigator.userAgent,
+    screenWidth: window.screen.width,
+    screenHeight: window.screen.height,
+    devicePixelRatio: window.devicePixelRatio,
+    url: window.location.href,
   };
   await dataManager.saveParticipantInfo(participantInfo);
 
