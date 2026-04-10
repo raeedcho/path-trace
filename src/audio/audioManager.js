@@ -26,7 +26,9 @@ export function createAudioManager() {
   function initialize() {
     if (audioCtx) return;
     try {
-      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)({
+        latencyHint: 'interactive',
+      });
       if (audioCtx.state === 'suspended') {
         audioCtx.resume().catch((err) => {
           console.warn('Failed to resume AudioContext:', err.message);
@@ -120,8 +122,11 @@ export function createAudioManager() {
     }
 
     const source = audioCtx.createBufferSource();
+    const gain = audioCtx.createGain();
+    gain.gain.value = 0.15;
     source.buffer = buffer;
-    source.connect(audioCtx.destination);
+    source.connect(gain);
+    gain.connect(audioCtx.destination);
     source.start(0);
   }
 

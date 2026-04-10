@@ -116,6 +116,8 @@ export function createCursorManager(options = {}) {
   let canvasWidth = 0;
   let canvasHeight = 0;
   let locked = false;
+  let paused = false;
+  let _resumeResolve = null;
   let targetCanvas = null;
   const listeners = [];
 
@@ -143,6 +145,7 @@ export function createCursorManager(options = {}) {
       document.addEventListener('mousemove', mouseMoveHandler);
     } else {
       locked = false;
+      paused = true;
       if (mouseMoveHandler) {
         document.removeEventListener('mousemove', mouseMoveHandler);
         mouseMoveHandler = null;
@@ -283,6 +286,21 @@ export function createCursorManager(options = {}) {
     return locked;
   }
 
+  function isPaused() { return paused; }
+
+  function waitForResume() {
+    if (!paused) return Promise.resolve();
+    return new Promise(resolve => { _resumeResolve = resolve; });
+  }
+  
+  function resume() {
+    paused = false;
+    if (_resumeResolve) {
+      _resumeResolve();
+      _resumeResolve = null;
+    }
+  }
+
   return {
     requestPointerLock,
     releasePointerLock,
@@ -293,5 +311,8 @@ export function createCursorManager(options = {}) {
     onCursorMove,
     setOnLockLost,
     isLocked,
+    resume,
+    isPaused,
+    waitForResume,
   };
 }

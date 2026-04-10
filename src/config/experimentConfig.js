@@ -21,12 +21,16 @@ export default {
 
   countdown: {
     holdDuration: 1000,
-    toneInterval: null,
+    toneInterval: null,  // null = auto-scale to meanTime per speed tier (matches original rhythm)
     tones: [
       { color: 'countdown.ready', sound: 'ready' },
       { color: 'countdown.set',   sound: 'ready' },
       { color: 'countdown.go',    sound: 'go'    },
     ],
+  },
+
+  tracing: {
+    maxDurationMultiplier: 3,  // max tracing time = maxTime * multiplier before TIMEOUT is sent
   },
 
   feedback: {
@@ -37,6 +41,7 @@ export default {
     tooFastPenalty: 3000,
     tooSlowPenalty: 3000,
     straightLinePenalty: 5000,
+    accuracyTrailDuration: 1000,
   },
 
   blocks: [
@@ -98,7 +103,7 @@ export default {
     states: {
       IDLE:            { on: { BEGIN: 'HOLD' } },
       HOLD:            { on: { HOLD_COMPLETE: 'COUNTDOWN', HOLD_BROKEN: 'HOLD' } },
-      COUNTDOWN:       { on: { COUNTDOWN_DONE: 'TRACING' } },
+      COUNTDOWN:       { on: { COUNTDOWN_DONE: 'TRACING', HOLD_BROKEN: 'HOLD' } },
       TRACING:         { on: { TARGET_HIT: 'FEEDBACK', TIMEOUT: 'FEEDBACK' } },
       FEEDBACK:        { on: { FEEDBACK_DONE: 'STAGE_CHECK' } },
       STAGE_CHECK:     { on: { NEXT_STAGE: 'RETURN_TO_START', TRIAL_COMPLETE: 'TRIAL_END' } },
