@@ -26,7 +26,9 @@ export function createAudioManager() {
   function initialize() {
     if (audioCtx) return;
     try {
-      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)({
+        latencyHint: 'interactive',
+      });
       if (audioCtx.state === 'suspended') {
         audioCtx.resume().catch((err) => {
           console.warn('Failed to resume AudioContext:', err.message);
