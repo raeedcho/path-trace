@@ -177,7 +177,7 @@ async function main() {
     screenWidth: window.screen.width,
     screenHeight: window.screen.height,
     devicePixelRatio: window.devicePixelRatio,
-    url: window.location.href,
+    url: `${window.location.origin}${window.location.pathname}`,
   };
   await dataManager.saveParticipantInfo(participantInfo);
 
