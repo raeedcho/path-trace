@@ -95,6 +95,7 @@ function createMockDeps() {
       initialize: vi.fn(),
       playDefaultTone: vi.fn(),
       playTone: vi.fn(),
+      playSound: vi.fn(),
     },
     overlayManager: {
       show: vi.fn(),
@@ -125,6 +126,9 @@ function createMockDeps() {
         return vi.fn(); // unsubscribe
       }),
       drawCursor: vi.fn(),
+      isPaused: vi.fn(() => false),
+      waitForResume: vi.fn(() => Promise.resolve()),
+      resume: vi.fn(),
     },
     dataManager: {
       saveTrial: vi.fn(() => Promise.resolve()),
@@ -246,8 +250,8 @@ describe('createTrialRunner', () => {
     await vi.advanceTimersByTimeAsync(500);
     await promise;
 
-    expect(deps.audioManager.playDefaultTone).toHaveBeenCalled();
-    const toneCalls = deps.audioManager.playDefaultTone.mock.calls.map(c => c[0]);
+    expect(deps.audioManager.playSound).toHaveBeenCalled();
+    const toneCalls = deps.audioManager.playSound.mock.calls.map(c => c[0]);
     expect(toneCalls).toContain('ready');
     expect(toneCalls).toContain('go');
   });
