@@ -97,7 +97,7 @@ src/configs/
 └── arc-tracing-study.js    # Full study protocol
 ```
 
-The `vite.config.js` uses `resolve.alias` to map `@experiment-config` to the correct file based on `--mode`. All engine code imports from the alias and never knows which specific config it received.
+The `vite.config.js` uses `resolve.alias` to map `@experiment-config` to the correct file based on `--mode`. All engine code imports from the alias and never knows which specific config it received. If you pass a mode that doesn't have a matching config file, the build fails with a helpful error listing available configs.
 
 To add a new experiment: create `src/configs/my-new-study.js`, add a script to `package.json` (`"dev:my-new-study": "vite --mode my-new-study"`), and run it. See `docs/creating-tasks.md` for details.
 
@@ -111,10 +111,11 @@ Every data file includes build metadata for reproducibility:
     "gitTag": "v1.0.0-3-g4a2b1c0",
     "buildTime": "2026-04-10T14:30:00.000Z",
     "experimentMode": "arc-tracing-study",
-    "userAgent": "...",
+    "userAgent": "Mozilla/5.0 ...",
     "screenWidth": 1920,
     "screenHeight": 1080,
-    "devicePixelRatio": 2
+    "devicePixelRatio": 2,
+    "url": "https://my-experiment.web.app/"
   }
 }
 ```
@@ -172,12 +173,22 @@ The engine runs each stage sequentially, transitioning through RETURN_TO_START b
 
 ## Local vs. production mode
 
-The data backend is controlled by the `VITE_DATA_BACKEND` environment variable, set automatically by Vite's `.env` files:
+The data backend is controlled by the `VITE_DATA_BACKEND` environment variable. By default, `.env` sets this to `local`:
 
-| File | Value | Behavior |
-|------|-------|----------|
-| `.env.development` | `local` | Data accumulates in memory, downloads as JSON on completion |
-| `.env.production` | `firebase` | Data writes to Firebase Realtime Database per trial |
+```
+VITE_DATA_BACKEND=local
+```
+
+| Value | Behavior |
+|-------|----------|
+| `local` (default) | Data accumulates in memory, downloads as JSON on completion |
+| `firebase` | Data writes to Firebase Realtime Database per trial |
+
+For local development, `npm run dev` and `npm run dev:arc-tracing` both use local mode automatically. For production builds that write to Firebase, override the variable at build time:
+
+```bash
+VITE_DATA_BACKEND=firebase npm run build:arc-tracing
+```
 
 In local mode, trial summaries (without raw point arrays) are also backed up to `localStorage` after each trial as crash recovery insurance.
 
@@ -186,18 +197,18 @@ In local mode, trial summaries (without raw point arrays) are also backed up to 
 1. Create a Firebase project at [console.firebase.google.com](https://console.firebase.google.com).
 2. Enable Anonymous Authentication in the Firebase console.
 3. Set up a Realtime Database and set rules to allow authenticated writes.
-4. Fill in the `firebase` section of your experiment config file with your project's credentials.
+4. Fill in the `firebase` section of your experiment config file (`src/configs/arc-tracing-study.js`) with your project's credentials.
 5. Create a Firebase Hosting site and deploy target:
    ```bash
    firebase hosting:sites:create my-experiment-site
-   firebase target:apply hosting my-experiment my-experiment-site
+   firebase target:apply hosting arc-tracing-study my-experiment-site
    ```
-6. Build and deploy:
+6. Build with Firebase data backend and deploy:
    ```bash
-   npm run build:arc-tracing
-   firebase deploy --only hosting:my-experiment
+   VITE_DATA_BACKEND=firebase npm run build:arc-tracing
+   firebase deploy --only hosting:arc-tracing-study
    ```
-7. On Prolific/MTurk, point participants to your Firebase Hosting URL.
+7. On Prolific/MTurk, point participants to your Firebase Hosting URL (e.g., `my-experiment-site.web.app`).
 
 ## Data format
 
@@ -215,7 +226,12 @@ The downloaded JSON (local mode) or Firebase document (production) has this stru
     "buildMetadata": {
       "gitTag": "v1.0.0",
       "buildTime": "2026-04-10T14:30:00.000Z",
-      "experimentMode": "arc-tracing-study"
+      "experimentMode": "arc-tracing-study",
+      "userAgent": "Mozilla/5.0 ...",
+      "screenWidth": 1920,
+      "screenHeight": 1080,
+      "devicePixelRatio": 2,
+      "url": "https://my-experiment.web.app/"
     }
   },
   "trials": [

@@ -1,5 +1,5 @@
 import './style.css';
-import config from './config/experimentConfig.js';
+import config from '@experiment-config';
 import { validateConfig } from './utils/validation.js';
 import { generateTrialSequence } from './config/trialSequence.js';
 import { COLORS, DEFAULTS } from './config/constants.js';
@@ -169,6 +169,16 @@ async function main() {
 
   // 3. Run intake form
   const participantInfo = await collectParticipantInfo(overlayManager);
+  participantInfo.buildMetadata = {
+    gitTag: __GIT_TAG__,
+    buildTime: __BUILD_TIME__,
+    experimentMode: __EXPERIMENT_MODE__,
+    userAgent: navigator.userAgent,
+    screenWidth: window.screen.width,
+    screenHeight: window.screen.height,
+    devicePixelRatio: window.devicePixelRatio,
+    url: `${window.location.origin}${window.location.pathname}`,
+  };
   await dataManager.saveParticipantInfo(participantInfo);
 
   // 4. Initialize audio (requires user gesture which intake form provided)

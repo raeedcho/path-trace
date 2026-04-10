@@ -16,7 +16,7 @@ export class FirebaseDataManager {
     if (missing.length > 0) {
       throw new Error(
         `FirebaseDataManager: missing required config fields: ${missing.join(', ')}. ` +
-        'Set these values in experimentConfig.js before deploying.'
+        'Set these values in your experiment config file (src/configs/) before deploying.'
       );
     }
 

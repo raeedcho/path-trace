@@ -1,4 +1,4 @@
-// src/config/experimentConfig.js — Master config: blocks, timing, speed tiers
+// src/configs/arc-tracing-study.js — Full arc tracing study protocol
 
 export default {
   experiment: {
