@@ -464,7 +464,7 @@ export function createTrialRunner({ canvasManager, audioManager, overlayManager,
       const target = path.getTargetPosition();
 
       // Reset cursor to start position
-      cursorManager.resetCursorPosition(startPos.x, startPos.y);
+      cursorManager.resetCursorPosition(centerX, centerY);
 
       // Update HUD
       progressDisplay.updateGoalTime(trialConfig.speedTier.min, trialConfig.speedTier.max);
