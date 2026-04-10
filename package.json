@@ -7,8 +7,11 @@
     "node": "^20.19.0 || >=22.12.0"
   },
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
+    "dev": "vite --mode default",
+    "dev:arc-tracing": "vite --mode arc-tracing-study",
+    "build": "vite build --mode default",
+    "build:arc-tracing": "vite build --mode arc-tracing-study",
+    "build:all": "vite build --mode default && vite build --mode arc-tracing-study",
     "preview": "vite preview",
     "test": "vitest",
     "test:run": "vitest run"
